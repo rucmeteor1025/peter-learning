@@ -284,7 +284,7 @@ function startZhMode(mode) {
 
 // ===== 数学口算题（填空式，Kidjent 风格 + 常见错误干扰项）=====
 // ===== 数学口算题生成器（一年级下学期标准）=====
-// 题型分布：0-1 热身(20以内) · 2-3 进位加 · 4-5 退位减 · 6-7 连加连减 · 8-9 应用题
+// 题型分布：0-1 进位加 · 2-3 退位减 · 4-5 连加连减 · 6-9 应用题（4 道，三类轮转）
 function makeOptions(ans) {
 // 干扰项：±1/±10/进退位常见错误（进位忘加、借位忘减 → ±9），保证唯一且 >=0
 const wrongs = new Set();
@@ -382,9 +382,8 @@ else { text = a + ' + ' + b + ' - ' + c + ' = __'; full = a + ' + ' + b + ' - ' 
 }
 return { math: true, question: text, hint: '连加连减 · 从左往右算', options: makeOptions(ans), correct: String(ans), explanation: full };
 }
-// 应用题（求总数 / 求剩余 / 求相差 —— 一年级下学期重点）
-function genAppQuestion() {
-const kind = Math.floor(Math.random() * 3);
+// 应用题（求总数 / 求剩余 / 求相差 —— 一年级下学期重点，kind 三类轮转）
+function genAppQuestion(kind) {
 let text, ans, full;
 	if (kind === 0) {
 	const a = 15 + Math.floor(Math.random() * 35);
@@ -415,11 +414,10 @@ full = a + ' - ' + b + ' = ' + ans + '（求相差用减法）';
 return { math: true, question: text, hint: '应用题 · 先找关键词（一共/还剩/多几颗）', options: makeOptions(ans), correct: String(ans), explanation: full };
 }
 function genMathQuestion(qi) {
-if (qi < 2) return genTwentyQuestion();       // 0-1 热身
-if (qi < 4) return genHundredQuestion(true);  // 2-3 进位加法
-if (qi < 6) return genHundredQuestion(false); // 4-5 退位减法
-if (qi < 8) return genChainQuestion();        // 6-7 连加连减
-return genAppQuestion();                      // 8-9 应用题
+if (qi < 2) return genHundredQuestion(true);       // 0-1 进位加法
+if (qi < 4) return genHundredQuestion(false);      // 2-3 退位减法
+if (qi < 6) return genChainQuestion();             // 4-5 连加连减
+return genAppQuestion(qi % 3);                     // 6-9 应用题（三类轮转）
 }
 
 async function loadData() {
