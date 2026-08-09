@@ -39,6 +39,7 @@ body{background:#f5f7fa;min-height:100vh;-webkit-tap-highlight-color:transparent
 <h1>🐻 Peter 学习空间</h1>
 <div class="date" id="dateDisplay"></div>
 <div class="streak" id="streakDisplay">🌟 今天开始打卡吧</div>
+<div class="streak" id="coinDisplay" style="margin-left:6px"></div>
 </div>
 
 <div class="wrap">
@@ -57,7 +58,7 @@ body{background:#f5f7fa;min-height:100vh;-webkit-tap-highlight-color:transparent
 <div class="ico game">🎮</div>
 <div>
 <h2>经典小游戏</h2>
-<p>扫雷 · 记忆翻牌 · 2048 · 华容道<br>学习累了玩一会儿</p>
+<p>扫雷 · 记忆翻牌 · 2048 · 华容道<br><span id="gameCardStatus">完成练习赚学习币解锁</span></p>
 </div>
 <div class="arrow">›</div>
 </a>
@@ -89,6 +90,29 @@ try {
 	const p = JSON.parse(localStorage.getItem('peter_progress') || '{}');
 	const n = p.streak || 0;
 	document.getElementById('streakDisplay').textContent = n > 0 ? '🔥 已连续打卡 ' + n + ' 天' : '🌟 今天开始打卡吧';
+} catch(e) {}
+let coins = 0;
+try {
+	coins = parseInt(localStorage.getItem('peter_coins') || '0') || 0;
+	document.getElementById('coinDisplay').textContent = '🪙 ' + coins;
+} catch(e) {}
+// 游戏卡片状态
+try {
+	const end = parseInt(localStorage.getItem('peter_game_end') || '0') || 0;
+	const card = document.getElementById('gameCardStatus');
+	if (card) {
+	if (end > Date.now()) {
+	const left = Math.max(0, end - Date.now());
+	card.textContent = '⏰ 游戏时间进行中（' + Math.ceil(left / 60000) + ' 分钟）';
+	card.style.color = '#00838F';
+	} else if (coins > 0) {
+	card.textContent = '🎮 可以开始玩（1 币 = 15 分钟）';
+	card.style.color = '#2E7D32';
+	} else {
+	card.textContent = '🔒 完成练习赚学习币解锁';
+	card.style.color = '#C62828';
+	}
+	}
 } catch(e) {}
 // 本周打卡日历（与 App 内一致）
 try {

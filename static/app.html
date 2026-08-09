@@ -136,6 +136,7 @@ body{font-family:'PingFang SC','Noto Sans SC','PingFang SC',sans-serif;backgroun
 <h1>🐻 Peter 学习小助手</h1>
 <div class="date" id="dateDisplay"></div>
 <div class="streak" id="streakDisplay"></div>
+<div class="streak" id="coinDisplay" style="margin-left:6px"></div>
 </div>
 <div class="nav">
 <button class="en-btn" onclick="switchModule('en')">🇬🇧 英语</button>
@@ -157,7 +158,7 @@ const d = new Date();
 return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
 }
 const today = localDate();
-document.getElementById('dateDisplay').textContent = new Date().toLocaleDateString('zh-CN', {year:'numeric',month:'long',day:'numeric',weekday:'long'});
+	document.getElementById('dateDisplay').textContent = new Date().toLocaleDateString('zh-CN', {year:'numeric',month:'long',day:'numeric',weekday:'long'});
 // 头部显示连续打卡
 function renderStreak() {
 try {
@@ -168,6 +169,15 @@ if (el) el.textContent = n > 0 ? '🔥 已连续打卡 ' + n + ' 天' : '🌟 �
 } catch(e) {}
 }
 renderStreak();
+
+// ===== 学习币（完成练习 → 赚币 → 解锁小游戏）=====
+function getCoins() { try { return parseInt(localStorage.getItem('peter_coins') || '0') || 0; } catch(e) { return 0; } }
+function addCoins(n) { try { localStorage.setItem('peter_coins', String(getCoins() + n)); } catch(e) {} }
+function renderCoins() {
+const el = document.getElementById('coinDisplay');
+if (el) el.textContent = '🪙 ' + getCoins();
+}
+renderCoins();
 
 // ===== 语音朗读（浏览器自带 TTS，无需联网）=====
 let voiceCn = null, voiceEn = null;
@@ -874,6 +884,10 @@ progress.lastDate = today;
 }
 localStorage.setItem('peter_progress', JSON.stringify(progress));
 renderStreak();
+// 完成练习赚 1 个学习币（小游戏解锁用）
+addCoins(1);
+renderCoins();
+const coinNote = `<div class="score-sub">🪙 获得 1 个学习币！可以去玩 15 分钟小游戏</div>`;
 
 // 本轮错题数（提示进了错题本）
 const wrongMap = loadWrong();
@@ -889,6 +903,7 @@ content.innerHTML = `
 <div class="score-text">${score} / ${total}</div>
 <div class="score-msg">${msg}</div>
 <div class="score-sub">🔥 已连续打卡 ${progress.streak || 0} 天</div>
+${coinNote}
 ${livesLeft}
 ${weekCalendar()}
 ${wrongNote}
