@@ -23,6 +23,14 @@ body{background:#f5f7fa;min-height:100vh;-webkit-tap-highlight-color:transparent
 .card p{font-size:12.5px;color:#888;margin-top:3px;line-height:1.5}
 .card .arrow{margin-left:auto;font-size:20px;color:#ccc}
 .foot{text-align:center;color:#bbb;font-size:12px;padding:24px 0 36px}
+.week-cal{background:#fff;border-radius:18px;box-shadow:0 3px 14px rgba(0,0,0,.07);padding:14px 16px;margin-bottom:14px}
+.wc-title{font-size:13px;color:#999;font-weight:600;margin-bottom:10px}
+.wc-row{display:flex;justify-content:space-between}
+.wc-cell{display:flex;flex-direction:column;align-items:center;gap:4px}
+.wc-dot{width:28px;height:28px;border-radius:7px;background:#e8e8e8}
+.wc-dot.l1{background:#c8e6c9}.wc-dot.l2{background:#81c784}.wc-dot.l3{background:#4caf50}
+.wc-cell.today .wc-dot{outline:2px solid #FF6B35;outline-offset:1px}
+.wc-wd{font-size:10px;color:#aaa}
 </style>
 </head>
 <body>
@@ -33,6 +41,8 @@ body{background:#f5f7fa;min-height:100vh;-webkit-tap-highlight-color:transparent
 </div>
 
 <div class="wrap">
+<div class="week-cal" id="weekCal"></div>
+
 <div class="sec-title">📝 每日练习</div>
 <a class="card" href="static/app.html">
 <div class="ico app">✏️</div>
@@ -70,6 +80,29 @@ try {
 	const p = JSON.parse(localStorage.getItem('peter_progress') || '{}');
 	const n = p.streak || 0;
 	document.getElementById('streakDisplay').textContent = n > 0 ? '🔥 已连续打卡 ' + n + ' 天' : '🌟 今天开始打卡吧';
+} catch(e) {}
+// 本周打卡日历（与 App 内一致）
+try {
+	const p = JSON.parse(localStorage.getItem('peter_progress') || '{}');
+	const now = new Date();
+	const dow = (now.getDay() + 6) % 7;
+	const monday = new Date(now);
+	monday.setDate(now.getDate() - dow);
+	const today = now.getFullYear() + '-' + String(now.getMonth() + 1).padStart(2, '0') + '-' + String(now.getDate()).padStart(2, '0');
+	let html = '<div class="wc-title">📅 本周打卡（练得越多越绿）</div><div class="wc-row">';
+	for (let i = 0; i < 7; i++) {
+		const d = new Date(monday);
+		d.setDate(monday.getDate() + i);
+		const ds = d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+		const day = p[ds] || {};
+		const mods = Object.keys(day).filter(k => k !== 'streak' && k !== 'lastDate').length;
+		const lvl = mods === 0 ? '' : mods === 1 ? 'l1' : mods === 2 ? 'l2' : 'l3';
+		const isToday = ds === today;
+		const wd = ['一', '二', '三', '四', '五', '六', '日'][i];
+		html += '<div class="wc-cell' + (isToday ? ' today' : '') + '"><div class="wc-dot ' + lvl + '"></div><div class="wc-wd">' + wd + '</div></div>';
+	}
+	html += '</div>';
+	document.getElementById('weekCal').innerHTML = html;
 } catch(e) {}
 </script>
 </body>

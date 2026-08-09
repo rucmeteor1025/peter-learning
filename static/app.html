@@ -38,6 +38,14 @@ body{font-family:'PingFang SC','Noto Sans SC',sans-serif;background:#f5f7fa;colo
 .score-text{font-size:36px;font-weight:700;color:#FF6B35;margin-bottom:8px}
 .score-msg{font-size:16px;color:#666;margin-bottom:12px}
 .score-sub{font-size:13px;color:#999;margin-bottom:18px}
+.week-cal{margin:12px auto 16px;background:#fafafa;border-radius:12px;padding:12px 14px;max-width:320px}
+.wc-title{font-size:12px;color:#999;font-weight:600;margin-bottom:10px;text-align:left}
+.wc-row{display:flex;justify-content:space-between}
+.wc-cell{display:flex;flex-direction:column;align-items:center;gap:4px}
+.wc-dot{width:26px;height:26px;border-radius:7px;background:#e8e8e8}
+.wc-dot.l1{background:#c8e6c9}.wc-dot.l2{background:#81c784}.wc-dot.l3{background:#4caf50}
+.wc-cell.today .wc-dot{outline:2px solid #FF6B35;outline-offset:1px}
+.wc-wd{font-size:10px;color:#aaa}
 .speak-btn{display:inline-block;margin:8px 0 4px;padding:7px 16px;background:#E3F2FD;color:#1976D2;border:none;border-radius:20px;font-size:13px;font-weight:600;cursor:pointer}
 .speak-btn:active{background:#BBDEFB}
 .restart-btn{padding:12px 32px;background:#FF6B35;color:#fff;border:none;border-radius:12px;font-size:16px;font-weight:600;cursor:pointer}
@@ -413,6 +421,29 @@ return;
 showQuestion();
 }
 
+// 本周打卡日历（周一~周日，当天练了几科就几级绿）
+function weekCalendar() {
+const p = JSON.parse(localStorage.getItem('peter_progress') || '{}');
+const now = new Date();
+const dow = (now.getDay() + 6) % 7; // 周一=0
+const monday = new Date(now);
+monday.setDate(now.getDate() - dow);
+let html = '<div class="week-cal"><div class="wc-title">📅 本周打卡（练得越多越绿）</div><div class="wc-row">';
+for (let i = 0; i < 7; i++) {
+const d = new Date(monday);
+d.setDate(monday.getDate() + i);
+const ds = d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+const day = p[ds] || {};
+const mods = Object.keys(day).filter(k => k !== 'streak' && k !== 'lastDate').length;
+const lvl = mods === 0 ? '' : mods === 1 ? 'l1' : mods === 2 ? 'l2' : 'l3';
+const isToday = ds === today;
+const wd = ['一', '二', '三', '四', '五', '六', '日'][i];
+html += '<div class="wc-cell' + (isToday ? ' today' : '') + '"><div class="wc-dot ' + lvl + '"></div><div class="wc-wd">' + wd + '</div></div>';
+}
+html += '</div></div>';
+return html;
+}
+
 function showResults() {
 const content = document.getElementById('content');
 const emoji = score >= 9 ? '🏆' : score >= 7 ? '⭐' : score >= 5 ? '👍' : '💪';
@@ -449,6 +480,7 @@ content.innerHTML = `
 <div class="score-text">${score} / 10</div>
 <div class="score-msg">${msg}</div>
 <div class="score-sub">🔥 已连续打卡 ${progress.streak || 0} 天</div>
+${weekCalendar()}
 ${wrongNote}
 <button class="restart-btn" onclick="switchModule('${currentModule}')">再做一次</button>
 </div>
