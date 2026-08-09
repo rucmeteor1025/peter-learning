@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>🐻 Peter 学习空间</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;font-family:-apple-system,'PingFang SC','Noto Sans SC',sans-serif}
+body{background:#f5f7fa;min-height:100vh;-webkit-tap-highlight-color:transparent}
+.hdr{background:linear-gradient(135deg,#FF6B35,#FF8E53);color:#fff;padding:28px 20px 22px;text-align:center;border-radius:0 0 28px 28px}
+.hdr h1{font-size:24px;margin-bottom:6px}
+.hdr .date{font-size:13px;opacity:.9}
+.hdr .streak{display:inline-block;margin-top:10px;background:rgba(255,255,255,.2);border-radius:20px;padding:5px 14px;font-size:14px;font-weight:600}
+.wrap{max-width:520px;margin:20px auto;padding:0 16px}
+.sec-title{font-size:14px;color:#999;margin:20px 4px 10px;font-weight:600;letter-spacing:1px}
+.card{background:#fff;border-radius:18px;box-shadow:0 3px 14px rgba(0,0,0,.07);padding:18px;margin-bottom:14px;display:flex;align-items:center;gap:16px;cursor:pointer;transition:transform .12s;text-decoration:none;color:inherit}
+.card:active{transform:scale(.97)}
+.card .ico{font-size:34px;width:60px;height:60px;display:flex;align-items:center;justify-content:center;border-radius:16px;flex-shrink:0}
+.card .ico.app{background:#FFF3E0}
+.card .ico.graph{background:#E8F5E9}
+.card .ico.graph2{background:#EDE7F6}
+.card h2{font-size:17px;font-weight:700}
+.card p{font-size:12.5px;color:#888;margin-top:3px;line-height:1.5}
+.card .arrow{margin-left:auto;font-size:20px;color:#ccc}
+.foot{text-align:center;color:#bbb;font-size:12px;padding:24px 0 36px}
+</style>
+</head>
+<body>
+<div class="hdr">
+<h1>🐻 Peter 学习空间</h1>
+<div class="date" id="dateDisplay"></div>
+<div class="streak" id="streakDisplay">🌟 今天开始打卡吧</div>
+</div>
+
+<div class="wrap">
+<div class="sec-title">📝 每日练习</div>
+<a class="card" href="static/app.html">
+<div class="ico app">✏️</div>
+<div>
+<h2>Peter 每日练习</h2>
+<p>语文 · 数学 · 英语 · 围棋<br>每天 10 题，答对得星</p>
+</div>
+<div class="arrow">›</div>
+</a>
+
+<div class="sec-title">🗺️ 知识图谱（拖拽看 · 点节点学）</div>
+<a class="card" href="graphs/Peter知识图谱_暑假.html">
+<div class="ico graph">☀️</div>
+<div>
+<h2>一年级暑假 · 知识图谱</h2>
+<p>语文复习 + 课外阅读 + 诗词背诵<br>数学复习 · 英语短句 · 围棋 1 段备考</p>
+</div>
+<div class="arrow">›</div>
+</a>
+<a class="card" href="graphs/Peter知识图谱_一年级下学期.html">
+<div class="ico graph2">📚</div>
+<div>
+<h2>一年级下学期 · 知识图谱</h2>
+<p>语文 + 数学 + 英语（上学期回顾）</p>
+</div>
+<div class="arrow">›</div>
+</a>
+</div>
+
+<div class="foot">为 Peter 制作 · 一年级暑假 · 2026</div>
+
+<script>
+document.getElementById('dateDisplay').textContent = new Date().toLocaleDateString('zh-CN', {year:'numeric',month:'long',day:'numeric',weekday:'long'});
+try {
+	const p = JSON.parse(localStorage.getItem('peter_progress') || '{}');
+	const n = p.streak || 0;
+	document.getElementById('streakDisplay').textContent = n > 0 ? '🔥 已连续打卡 ' + n + ' 天' : '🌟 今天开始打卡吧';
+} catch(e) {}
+</script>
+</body>
+</html>

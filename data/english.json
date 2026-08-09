@@ -1,0 +1,813 @@
+{
+  "meta": {
+    "grade": "一年级下学期",
+    "source": "一年级下册教材 U1-U5 + 字母故事 A-Z + 暑假短句 S1",
+    "dailyCount": 10
+  },
+  "units": [
+    {
+      "id": "U1",
+      "name": "Fun Time",
+      "words": [
+        {
+          "en": "apple",
+          "cn": "苹果",
+          "pinyin": "apple",
+          "distractors": [
+            "香蕉",
+            "西瓜"
+          ]
+        },
+        {
+          "en": "banana",
+          "cn": "香蕉",
+          "pinyin": "banana",
+          "distractors": [
+            "苹果",
+            "葡萄"
+          ]
+        },
+        {
+          "en": "cat",
+          "cn": "猫",
+          "pinyin": "cat",
+          "distractors": [
+            "狗",
+            "鸟"
+          ]
+        },
+        {
+          "en": "dog",
+          "cn": "狗",
+          "pinyin": "dog",
+          "distractors": [
+            "猫",
+            "鸡"
+          ]
+        },
+        {
+          "en": "egg",
+          "cn": "鸡蛋",
+          "pinyin": "egg",
+          "distractors": [
+            "鱼",
+            "肉"
+          ]
+        },
+        {
+          "en": "fish",
+          "cn": "鱼",
+          "pinyin": "fish",
+          "distractors": [
+            "鸟",
+            "虫"
+          ]
+        },
+        {
+          "en": "girl",
+          "cn": "女孩",
+          "pinyin": "girl",
+          "distractors": [
+            "男孩",
+            "宝宝"
+          ]
+        },
+        {
+          "en": "hand",
+          "cn": "手",
+          "pinyin": "hand",
+          "distractors": [
+            "脚",
+            "眼"
+          ]
+        },
+        {
+          "en": "ice",
+          "cn": "冰",
+          "pinyin": "ice",
+          "distractors": [
+            "火",
+            "雪"
+          ]
+        },
+        {
+          "en": "juice",
+          "cn": "果汁",
+          "pinyin": "juice",
+          "distractors": [
+            "牛奶",
+            "水"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "U2",
+      "name": "Listen and Do",
+      "words": [
+        {
+          "en": "kite",
+          "cn": "风筝",
+          "pinyin": "kite",
+          "distractors": [
+            "气球",
+            "飞机"
+          ]
+        },
+        {
+          "en": "lion",
+          "cn": "狮子",
+          "pinyin": "lion",
+          "distractors": [
+            "老虎",
+            "大象"
+          ]
+        },
+        {
+          "en": "moon",
+          "cn": "月亮",
+          "pinyin": "moon",
+          "distractors": [
+            "太阳",
+            "星星"
+          ]
+        },
+        {
+          "en": "nose",
+          "cn": "鼻子",
+          "pinyin": "nose",
+          "distractors": [
+            "嘴巴",
+            "耳朵"
+          ]
+        },
+        {
+          "en": "orange",
+          "cn": "橙子",
+          "pinyin": "orange",
+          "distractors": [
+            "苹果",
+            "香蕉"
+          ]
+        },
+        {
+          "en": "pen",
+          "cn": "钢笔",
+          "pinyin": "pen",
+          "distractors": [
+            "铅笔",
+            "蜡笔"
+          ]
+        },
+        {
+          "en": "queen",
+          "cn": "女王",
+          "pinyin": "queen",
+          "distractors": [
+            "国王",
+            "公主"
+          ]
+        },
+        {
+          "en": "red",
+          "cn": "红色",
+          "pinyin": "red",
+          "distractors": [
+            "蓝色",
+            "黄色"
+          ]
+        },
+        {
+          "en": "sun",
+          "cn": "太阳",
+          "pinyin": "sun",
+          "distractors": [
+            "月亮",
+            "云"
+          ]
+        },
+        {
+          "en": "tree",
+          "cn": "树",
+          "pinyin": "tree",
+          "distractors": [
+            "花",
+            "草"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "U3",
+      "name": "Listen and Say",
+      "words": [
+        {
+          "en": "umbrella",
+          "cn": "雨伞",
+          "pinyin": "umbrella",
+          "distractors": [
+            "帽子",
+            "衣服"
+          ]
+        },
+        {
+          "en": "violin",
+          "cn": "小提琴",
+          "pinyin": "violin",
+          "distractors": [
+            "钢琴",
+            "吉他"
+          ]
+        },
+        {
+          "en": "water",
+          "cn": "水",
+          "pinyin": "water",
+          "distractors": [
+            "牛奶",
+            "果汁"
+          ]
+        },
+        {
+          "en": "box",
+          "cn": "盒子",
+          "pinyin": "box",
+          "distractors": [
+            "袋子",
+            "箱子"
+          ]
+        },
+        {
+          "en": "yellow",
+          "cn": "黄色",
+          "pinyin": "yellow",
+          "distractors": [
+            "红色",
+            "蓝色"
+          ]
+        },
+        {
+          "en": "zoo",
+          "cn": "动物园",
+          "pinyin": "zoo",
+          "distractors": [
+            "公园",
+            "学校"
+          ]
+        },
+        {
+          "en": "ant",
+          "cn": "蚂蚁",
+          "pinyin": "ant",
+          "distractors": [
+            "蜜蜂",
+            "蝴蝶"
+          ]
+        },
+        {
+          "en": "bird",
+          "cn": "鸟",
+          "pinyin": "bird",
+          "distractors": [
+            "鱼",
+            "鸡"
+          ]
+        },
+        {
+          "en": "cow",
+          "cn": "奶牛",
+          "pinyin": "cow",
+          "distractors": [
+            "马",
+            "羊"
+          ]
+        },
+        {
+          "en": "duck",
+          "cn": "鸭子",
+          "pinyin": "duck",
+          "distractors": [
+            "鸡",
+            "鹅"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "U4",
+      "name": "Listen and Act",
+      "words": [
+        {
+          "en": "ear",
+          "cn": "耳朵",
+          "pinyin": "ear",
+          "distractors": [
+            "眼睛",
+            "鼻子"
+          ]
+        },
+        {
+          "en": "face",
+          "cn": "脸",
+          "pinyin": "face",
+          "distractors": [
+            "头",
+            "手"
+          ]
+        },
+        {
+          "en": "green",
+          "cn": "绿色",
+          "pinyin": "green",
+          "distractors": [
+            "红色",
+            "黄色"
+          ]
+        },
+        {
+          "en": "hat",
+          "cn": "帽子",
+          "pinyin": "hat",
+          "distractors": [
+            "鞋子",
+            "衣服"
+          ]
+        },
+        {
+          "en": "eye",
+          "cn": "眼睛",
+          "pinyin": "eye",
+          "distractors": [
+            "耳朵",
+            "鼻子"
+          ]
+        },
+        {
+          "en": "jump",
+          "cn": "跳",
+          "pinyin": "jump",
+          "distractors": [
+            "跑",
+            "走"
+          ]
+        },
+        {
+          "en": "kick",
+          "cn": "踢",
+          "pinyin": "kick",
+          "distractors": [
+            "扔",
+            "拍"
+          ]
+        },
+        {
+          "en": "leg",
+          "cn": "腿",
+          "pinyin": "leg",
+          "distractors": [
+            "手",
+            "脚"
+          ]
+        },
+        {
+          "en": "mouth",
+          "cn": "嘴巴",
+          "pinyin": "mouth",
+          "distractors": [
+            "眼睛",
+            "鼻子"
+          ]
+        },
+        {
+          "en": "neck",
+          "cn": "脖子",
+          "pinyin": "neck",
+          "distractors": [
+            "肩膀",
+            "腰"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "U5",
+      "name": "Listen and Sing",
+      "words": [
+        {
+          "en": "pear",
+          "cn": "梨",
+          "pinyin": "pear",
+          "distractors": [
+            "苹果",
+            "桃子"
+          ]
+        },
+        {
+          "en": "rabbit",
+          "cn": "兔子",
+          "pinyin": "rabbit",
+          "distractors": [
+            "狗",
+            "猫"
+          ]
+        },
+        {
+          "en": "star",
+          "cn": "星星",
+          "pinyin": "star",
+          "distractors": [
+            "月亮",
+            "太阳"
+          ]
+        },
+        {
+          "en": "tiger",
+          "cn": "老虎",
+          "pinyin": "tiger",
+          "distractors": [
+            "狮子",
+            "大象"
+          ]
+        },
+        {
+          "en": "uncle",
+          "cn": "叔叔",
+          "pinyin": "uncle",
+          "distractors": [
+            "阿姨",
+            "爷爷"
+          ]
+        },
+        {
+          "en": "van",
+          "cn": "面包车",
+          "pinyin": "van",
+          "distractors": [
+            "自行车",
+            "出租车"
+          ]
+        },
+        {
+          "en": "wolf",
+          "cn": "狼",
+          "pinyin": "wolf",
+          "distractors": [
+            "狗",
+            "熊"
+          ]
+        },
+        {
+          "en": "fox",
+          "cn": "狐狸",
+          "pinyin": "fox",
+          "distractors": [
+            "兔子",
+            "猫"
+          ]
+        },
+        {
+          "en": "yam",
+          "cn": "山药",
+          "pinyin": "yam",
+          "distractors": [
+            "土豆",
+            "红薯"
+          ]
+        },
+        {
+          "en": "zip",
+          "cn": "拉链",
+          "pinyin": "zip",
+          "distractors": [
+            "扣子",
+            "绳子"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "S1",
+      "name": "暑假短句",
+      "words": [
+        {
+          "en": "What's this?",
+          "cn": "这是什么？",
+          "pinyin": "whats this",
+          "distractors": [
+            "你好",
+            "几点啦"
+          ]
+        },
+        {
+          "en": "It's a book.",
+          "cn": "它是一本书。",
+          "pinyin": "its a book",
+          "distractors": [
+            "这是一支笔",
+            "它在桌上"
+          ]
+        },
+        {
+          "en": "I like apples.",
+          "cn": "我喜欢苹果。",
+          "pinyin": "i like apples",
+          "distractors": [
+            "我不喜欢苹果",
+            "苹果是红的"
+          ]
+        },
+        {
+          "en": "I can swim.",
+          "cn": "我会游泳。",
+          "pinyin": "i can swim",
+          "distractors": [
+            "我会跑步",
+            "我喜欢游泳"
+          ]
+        },
+        {
+          "en": "Let's go!",
+          "cn": "我们走吧！",
+          "pinyin": "lets go",
+          "distractors": [
+            "我们玩吧",
+            "快回来"
+          ]
+        },
+        {
+          "en": "How are you?",
+          "cn": "你好吗？",
+          "pinyin": "how are you",
+          "distractors": [
+            "你几岁了",
+            "你是谁"
+          ]
+        },
+        {
+          "en": "Good morning!",
+          "cn": "早上好！",
+          "pinyin": "good morning",
+          "distractors": [
+            "晚上好",
+            "晚安"
+          ]
+        },
+        {
+          "en": "How many kites?",
+          "cn": "几只风筝？",
+          "pinyin": "how many kites",
+          "distractors": [
+            "风筝在哪",
+            "风筝真大"
+          ]
+        },
+        {
+          "en": "Thank you!",
+          "cn": "谢谢你！",
+          "pinyin": "thank you",
+          "distractors": [
+            "对不起",
+            "不客气"
+          ]
+        },
+        {
+          "en": "I'm seven.",
+          "cn": "我七岁。",
+          "pinyin": "im seven",
+          "distractors": [
+            "我上一年级",
+            "我叫Peter"
+          ]
+        },
+        {
+          "en": "Can I help you?",
+          "cn": "需要帮忙吗？",
+          "pinyin": "can i help you",
+          "distractors": [
+            "我可以吗",
+            "你是谁"
+          ]
+        },
+        {
+          "en": "I don't like it.",
+          "cn": "我不喜欢它。",
+          "pinyin": "i dont like it",
+          "distractors": [
+            "我喜欢它",
+            "它很棒"
+          ]
+        }
+      ]
+    }
+  ],
+  "letters": [
+    {
+      "en": "A - Alligator",
+      "cn": "鳄鱼",
+      "distractors": [
+        "蛇",
+        "乌龟"
+      ]
+    },
+    {
+      "en": "B - Bear",
+      "cn": "熊",
+      "distractors": [
+        "狼",
+        "狗"
+      ]
+    },
+    {
+      "en": "C - Crocodile",
+      "cn": "鳄鱼",
+      "distractors": [
+        "蜥蜴",
+        "蛇"
+      ]
+    },
+    {
+      "en": "D - Dolphin",
+      "cn": "海豚",
+      "distractors": [
+        "鲨鱼",
+        "鲸鱼"
+      ]
+    },
+    {
+      "en": "E - Elephant",
+      "cn": "大象",
+      "distractors": [
+        "老虎",
+        "狮子"
+      ]
+    },
+    {
+      "en": "F - Frog",
+      "cn": "青蛙",
+      "distractors": [
+        "乌龟",
+        "鱼"
+      ]
+    },
+    {
+      "en": "G - Goat",
+      "cn": "山羊",
+      "distractors": [
+        "绵羊",
+        "牛"
+      ]
+    },
+    {
+      "en": "H - Horse",
+      "cn": "马",
+      "distractors": [
+        "驴",
+        "牛"
+      ]
+    },
+    {
+      "en": "I - Iguana",
+      "cn": "鬣蜥",
+      "distractors": [
+        "蛇",
+        "乌龟"
+      ]
+    },
+    {
+      "en": "J - Jellyfish",
+      "cn": "水母",
+      "distractors": [
+        "鱼",
+        "章鱼"
+      ]
+    },
+    {
+      "en": "K - Kangaroo",
+      "cn": "袋鼠",
+      "distractors": [
+        "兔子",
+        "猴子"
+      ]
+    },
+    {
+      "en": "L - Lion",
+      "cn": "狮子",
+      "distractors": [
+        "老虎",
+        "豹子"
+      ]
+    },
+    {
+      "en": "M - Monkey",
+      "cn": "猴子",
+      "distractors": [
+        "猩猩",
+        "狗"
+      ]
+    },
+    {
+      "en": "N - Narwhal",
+      "cn": "独角鲸",
+      "distractors": [
+        "鲸鱼",
+        "海豚"
+      ]
+    },
+    {
+      "en": "O - Octopus",
+      "cn": "章鱼",
+      "distractors": [
+        "水母",
+        "乌贼"
+      ]
+    },
+    {
+      "en": "P - Penguin",
+      "cn": "企鹅",
+      "distractors": [
+        "鸭子",
+        "海鸥"
+      ]
+    },
+    {
+      "en": "Q - Quail",
+      "cn": "鹌鹑",
+      "distractors": [
+        "鸡",
+        "鸽子"
+      ]
+    },
+    {
+      "en": "R - Rabbit",
+      "cn": "兔子",
+      "distractors": [
+        "仓鼠",
+        "猫"
+      ]
+    },
+    {
+      "en": "S - Seal",
+      "cn": "海豹",
+      "distractors": [
+        "海狮",
+        "海豚"
+      ]
+    },
+    {
+      "en": "T - Turtle",
+      "cn": "乌龟",
+      "distractors": [
+        "蜥蜴",
+        "蛇"
+      ]
+    },
+    {
+      "en": "U - Unicorn",
+      "cn": "独角兽",
+      "distractors": [
+        "马",
+        "鹿"
+      ]
+    },
+    {
+      "en": "V - Vulture",
+      "cn": "秃鹫",
+      "distractors": [
+        "老鹰",
+        "乌鸦"
+      ]
+    },
+    {
+      "en": "W - Whale",
+      "cn": "鲸鱼",
+      "distractors": [
+        "海豚",
+        "鲨鱼"
+      ]
+    },
+    {
+      "en": "X - X-ray fish",
+      "cn": "X光鱼",
+      "distractors": [
+        "虾",
+        "蟹"
+      ]
+    },
+    {
+      "en": "Y - Yak",
+      "cn": "牦牛",
+      "distractors": [
+        "牛",
+        "马"
+      ]
+    },
+    {
+      "en": "Z - Zebra",
+      "cn": "斑马",
+      "distractors": [
+        "马",
+        "驴"
+      ]
+    }
+  ]
+}

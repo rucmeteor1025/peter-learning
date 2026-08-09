@@ -1,0 +1,335 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>🐻 Peter 学习</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'PingFang SC','Noto Sans SC',sans-serif;background:#f5f7fa;color:#333;min-height:100vh}
+.header{background:linear-gradient(135deg,#FF6B35,#FF8E53);color:#fff;padding:20px;text-align:center;position:sticky;top:0;z-index:10}
+.header h1{font-size:24px;margin-bottom:4px}
+.header .date{font-size:14px;opacity:0.9}
+.nav{display:flex;justify-content:center;gap:12px;padding:16px;background:#fff;box-shadow:0 2px 8px rgba(0,0,0,0.08);position:sticky;top:68px;z-index:9}
+.nav button{padding:10px 20px;border:none;border-radius:20px;font-size:15px;font-weight:600;cursor:pointer;transition:all 0.3s}
+.nav .en-btn{background:#E3F2FD;color:#1976D2}
+.nav .en-btn.active,.nav .en-btn:active{background:#1976D2;color:#fff}
+.nav .zh-btn{background:#FFF3E0;color:#E65100}
+.nav .zh-btn.active,.nav .zh-btn:active{background:#E65100;color:#fff}
+.nav .go-btn{background:#F3E5F5;color:#7B1FA2}
+.nav .go-btn.active,.nav .go-btn:active{background:#7B1FA2;color:#fff}
+.content{padding:16px;max-width:500px;margin:0 auto}
+.question-card{background:#fff;border-radius:16px;padding:24px;margin-bottom:16px;box-shadow:0 2px 12px rgba(0,0,0,0.06)}
+.q-number{font-size:13px;color:#999;margin-bottom:8px}
+.q-prompt{font-size:18px;font-weight:600;margin-bottom:16px;line-height:1.6}
+.q-char{font-size:72px;text-align:center;margin:16px 0;color:#333;font-weight:700}
+.options{display:flex;flex-direction:column;gap:10px}
+.opt{padding:14px 18px;border:2px solid #e0e0e0;border-radius:12px;font-size:16px;cursor:pointer;transition:all 0.2s;text-align:center;font-weight:500}
+.opt:active{transform:scale(0.97)}
+.opt.correct{border-color:#4CAF50;background:#E8F5E9;color:#2E7D32}
+.opt.wrong{border-color:#F44336;background:#FFEBEE;color:#C62828}
+.opt.show-correct{border-color:#4CAF50;background:#E8F5E9;color:#2E7D32;font-weight:700}
+.explanation{margin-top:12px;padding:12px 16px;background:#F5F5F5;border-radius:10px;font-size:14px;color:#666;line-height:1.5}
+.next-btn{display:none;width:100%;padding:14px;background:#FF6B35;color:#fff;border:none;border-radius:12px;font-size:16px;font-weight:600;cursor:pointer;margin-top:12px}
+.next-btn:active{background:#E55A2B}
+.score-card{background:#fff;border-radius:16px;padding:32px;text-align:center;box-shadow:0 2px 12px rgba(0,0,0,0.06)}
+.score-emoji{font-size:64px;margin-bottom:12px}
+.score-text{font-size:36px;font-weight:700;color:#FF6B35;margin-bottom:8px}
+.score-msg{font-size:16px;color:#666;margin-bottom:20px}
+.restart-btn{padding:12px 32px;background:#FF6B35;color:#fff;border:none;border-radius:12px;font-size:16px;font-weight:600;cursor:pointer}
+.progress-bar{background:#e0e0e0;border-radius:10px;height:8px;margin-bottom:16px}
+.progress-fill{height:100%;border-radius:10px;transition:width 0.3s}
+.en-fill{background:#1976D2}
+.zh-fill{background:#E65100}
+.go-fill{background:#7B1FA2}
+.board{display:inline-grid;gap:1px;background:#DEB887;padding:8px;border-radius:8px;margin:0 auto}
+.cell{display:flex;align-items:center;justify-content:center;border-radius:50%;font-size:12px;font-weight:700;cursor:pointer}
+.cell-black{background:#333;color:#fff}
+.cell-white{background:#fff;color:#333;border:1px solid #ccc}
+.cell-empty{background:transparent;border:1px dashed rgba(0,0,0,0.2)}
+.cell-cand{border:2px solid #FF6B35 !important;background:rgba(255,107,53,0.15) !important}
+.cand-num{width:22px;height:22px;border-radius:50%;background:#FF6B35;color:#fff;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700}
+.cell-answer-good{background:#4CAF50 !important;border-color:#4CAF50 !important}
+.cell-answer-bad{background:#F44336 !important;border-color:#F44336 !important}
+.go-labels{font-size:11px;color:#a0713e;font-weight:600;display:flex;align-items:center;justify-content:center}
+.go-labels-col{display:grid;gap:1px}
+.go-labels-row{display:grid;gap:1px}
+.go-tip{font-size:12px;color:#888;margin-top:8px;text-align:center}
+.hint{font-size:13px;color:#888;margin-top:4px}
+.hidden{display:none}
+.fade-in{animation:fadeIn 0.3s ease}
+@keyframes fadeIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+</style>
+</head>
+<body>
+<div class="header">
+<h1>🐻 Peter 学习小助手</h1>
+<div class="date" id="dateDisplay"></div>
+</div>
+<div class="nav">
+<button class="en-btn" onclick="switchModule('en')">🇬🇧 英语</button>
+<button class="zh-btn" onclick="switchModule('zh')">📖 语文</button>
+<button class="go-btn" onclick="switchModule('go')">⚫ 围棋</button>
+</div>
+<div class="content" id="content">
+<div class="question-card" style="text-align:center;padding:40px">
+<div style="font-size:48px;margin-bottom:16px">👋</div>
+<div style="font-size:18px;font-weight:600;margin-bottom:8px">Peter，你好！</div>
+<div style="font-size:14px;color:#888">选择一个科目开始今天的练习吧</div>
+</div>
+</div>
+<script>
+const today = new Date().toISOString().slice(0, 10);
+document.getElementById('dateDisplay').textContent = new Date().toLocaleDateString('zh-CN', {year:'numeric',month:'long',day:'numeric',weekday:'long'});
+
+let enData = null, zhData = null, goData = null;
+let currentModule = null, currentQ = 0, score = 0, questions = [];
+let answered = false;
+
+async function loadData() {
+try {
+	const [e, z, g] = await Promise.all([
+	fetch('../data/english.json').then(r => r.json()),
+	fetch('../data/chinese.json').then(r => r.json()),
+	fetch('../data/go.json').then(r => r.json())
+	]);
+enData = e; zhData = z; goData = g;
+} catch(e) {
+document.getElementById('content').innerHTML = '<div class="question-card" style="text-align:center;padding:40px"><div style="font-size:48px;margin-bottom:16px">⚠️</div><div>加载数据失败，请确保服务器在运行</div></div>';
+}
+}
+
+function shuffle(arr) {
+for (let i = arr.length - 1; i > 0; i--) {
+const j = Math.floor(Math.random() * (i + 1));
+[arr[i], arr[j]] = [arr[j], arr[i]];
+}
+return arr;
+}
+
+function generateQuestions(module) {
+if (module === 'en') {
+const allWords = [];
+enData.units.forEach(u => u.words.forEach(w => allWords.push({...w, unit: u.id})));
+const selected = shuffle([...allWords]).slice(0, 10);
+return selected.map(w => ({
+question: `${w.en}`,
+hint: `选择正确的中文意思`,
+options: shuffle([w.cn, ...w.distractors]),
+correct: w.cn
+}));
+} else if (module === 'zh') {
+const allChars = [];
+zhData.categories.forEach(c => c.chars.forEach(ch => allChars.push({...ch, cat: c.id})));
+const selected = shuffle([...allChars]).slice(0, 10);
+return selected.map(ch => ({
+question: `${ch.pinyin}`,
+hint: `${ch.stroke}画 · 选择正确的汉字`,
+options: shuffle([ch.char, ...ch.distractors]),
+correct: ch.char,
+char: ch.char,
+meaning: ch.meaning
+}));
+	} else {
+	const selected = shuffle([...goData.puzzles]).slice(0, 10);
+	return selected.map(p => {
+	const letters = 'ABCDEFGH';
+	const correctLabel = letters[p.answer.col] + (p.size - p.answer.row);
+	// cells：候选点（含坐标），用于在棋盘上直接点选
+	const cells = [{row: p.answer.row, col: p.answer.col, label: correctLabel}];
+	while (cells.length < 3) {
+	const r = Math.floor(Math.random() * p.size);
+	const c = Math.floor(Math.random() * p.size);
+	const label = letters[c] + (p.size - r);
+	if (!cells.some(o => o.label === label) && p.board[r][c] === '.') {
+	cells.push({row: r, col: c, label});
+	}
+	}
+	shuffle(cells);
+	return {
+	...p,
+	question: p.question,
+	hint: p.hint,
+	cells: cells,
+	options: cells.map(o => o.label),
+	correct: correctLabel,
+	explanation: p.explanation
+	};
+	});
+	}
+}
+
+function renderBoard(puzzle) {
+	const sz = puzzle.size;
+	const cellSize = Math.min(36, (300 / sz));
+	const letters = 'ABCDEFGH';
+	const cells = puzzle.cells || [];
+	// 列字母标注（A B C ...）
+	let colLabels = '<div class="go-labels" style="grid-template-columns:repeat(' + sz + ',' + cellSize + 'px);grid-column:2;display:grid;gap:1px">';
+	for (let c = 0; c < sz; c++) {
+	colLabels += '<div class="go-labels">' + letters[c] + '</div>';
+	}
+	colLabels += '</div>';
+	// 行数字标注（size..1）
+	let rowLabels = '<div class="go-labels" style="grid-template-rows:repeat(' + sz + ',' + cellSize + 'px);grid-row:2;display:grid;gap:1px">';
+	for (let r = 0; r < sz; r++) {
+	rowLabels += '<div class="go-labels">' + (sz - r) + '</div>';
+	}
+	rowLabels += '</div>';
+
+	let html = '<div style="margin:12px auto;display:inline-block">';
+	html += '<div style="display:grid;grid-template-columns:' + cellSize + 'px auto;grid-template-rows:' + (cellSize / 2) + 'px auto;gap:0">';
+	html += '<div></div>' + colLabels + rowLabels;
+	html += '<div class="board" style="grid-template-columns:repeat(' + sz + ',' + cellSize + 'px);max-width:' + (sz * cellSize + 16) + 'px">';
+	for (let r = 0; r < sz; r++) {
+	for (let c = 0; c < sz; c++) {
+	const stone = puzzle.board[r][c];
+	const cls = stone === 'B' ? 'cell-black' : stone === 'W' ? 'cell-white' : 'cell-empty';
+	const candIdx = cells.findIndex(o => o.row === r && o.col === c);
+	let inner = stone || '';
+	let candCls = '';
+	if (candIdx >= 0) {
+	candCls = ' cell-cand';
+	inner = '<span class="cand-num">' + (candIdx + 1) + '</span>';
+	}
+	html += '<div class="cell ' + cls + candCls + '" id="gocell-' + r + '-' + c + '" onclick="goCellClick(' + r + ',' + c + ')" style="width:' + cellSize + 'px;height:' + cellSize + 'px">' + inner + '</div>';
+	}
+	}
+	html += '</div></div></div>';
+	return html;
+}
+
+function goCellClick(r, c) {
+	if (answered || currentModule !== 'go') return;
+	const q = questions[currentQ];
+	const idx = q.cells.findIndex(o => o.row === r && o.col === c);
+	if (idx >= 0) checkAnswer(idx);
+}
+
+function showQuestion() {
+const q = questions[currentQ];
+const content = document.getElementById('content');
+const colors = {en: '#1976D2', zh: '#E65100', go: '#7B1FA2'};
+const fillCls = {en: 'en-fill', zh: 'zh-fill', go: 'go-fill'};
+
+	let extra = '';
+	if (currentModule === 'zh' && q.char) {
+	extra = `<div class="q-char">${q.char}</div>`;
+	} else if (currentModule === 'go') {
+	extra = renderBoard(q);
+	}
+
+	let optionHtml;
+	if (currentModule === 'go') {
+	optionHtml = q.cells.map((cell, i) =>
+	`<div class="opt" onclick="checkAnswer(${i})" id="opt-${i}">圈${i + 1}（${cell.label}）</div>`
+	).join('');
+	} else {
+	optionHtml = q.options.map((opt, i) =>
+	`<div class="opt" onclick="checkAnswer(${i})" id="opt-${i}">${opt}</div>`
+	).join('');
+	}
+
+	const goTip = currentModule === 'go' ? '<div class="go-tip">👆 点击棋盘上带圈的位置答题（也可以点下面的圈号）</div>' : '';
+
+	content.innerHTML = `
+	<div class="fade-in">
+	<div class="progress-bar"><div class="progress-fill ${fillCls[currentModule]}" style="width:${(currentQ + 1) / 10 * 100}%"></div></div>
+	<div class="question-card">
+	<div class="q-number">第 ${currentQ + 1} / 10 题</div>
+	<div class="q-prompt">${q.question}</div>
+	<div class="hint">${q.hint}</div>
+	${extra}
+	</div>
+	${goTip}
+	<div class="options">
+	${optionHtml}
+	</div>
+	<div class="explanation hidden" id="explanation">${q.explanation || `正确答案：${q.correct}`}</div>
+	<button class="next-btn" id="nextBtn" onclick="nextQuestion()">下一题 →</button>
+	</div>
+	`;
+	answered = false;
+}
+
+function checkAnswer(idx) {
+	if (answered) return;
+	answered = true;
+	const q = questions[currentQ];
+	const opt = document.getElementById('opt-' + idx);
+	const isCorrect = q.options[idx] === q.correct;
+
+	if (isCorrect) {
+	opt.classList.add('correct');
+	score++;
+	} else {
+	opt.classList.add('wrong');
+	q.options.forEach((o, i) => {
+	if (o === q.correct) {
+	document.getElementById('opt-' + i).classList.add('show-correct');
+	}
+	});
+	}
+
+	// 围棋：棋盘上同步反馈（绿色=正确落点，红色=选错）
+	if (currentModule === 'go') {
+	q.cells.forEach((cell, i) => {
+	const el = document.getElementById('gocell-' + cell.row + '-' + cell.col);
+	if (el) {
+	if (cell.label === q.correct) {
+	el.classList.add('cell-answer-good');
+	} else if (i === idx) {
+	el.classList.add('cell-answer-bad');
+	}
+	}
+	});
+	}
+	document.getElementById('explanation').classList.remove('hidden');
+	document.getElementById('nextBtn').style.display = 'block';
+}
+
+function nextQuestion() {
+currentQ++;
+if (currentQ >= 10) {
+showResults();
+return;
+}
+showQuestion();
+}
+
+function showResults() {
+const content = document.getElementById('content');
+const emoji = score >= 9 ? '🏆' : score >= 7 ? '⭐' : score >= 5 ? '👍' : '💪';
+const msg = score >= 9 ? '太棒了！完美！' : score >= 7 ? '不错！继续加油！' : score >= 5 ? '还可以，再练练！' : '没关系，明天继续！';
+
+const progress = JSON.parse(localStorage.getItem('peter_progress') || '{}');
+if (!progress[today]) progress[today] = {};
+progress[today][currentModule] = score;
+localStorage.setItem('peter_progress', JSON.stringify(progress));
+
+content.innerHTML = `
+<div class="fade-in">
+<div class="score-card">
+<div class="score-emoji">${emoji}</div>
+<div class="score-text">${score} / 10</div>
+<div class="score-msg">${msg}</div>
+<button class="restart-btn" onclick="switchModule('${currentModule}')">再做一次</button>
+</div>
+</div>
+`;
+}
+
+function switchModule(module) {
+currentModule = module;
+currentQ = 0;
+score = 0;
+document.querySelectorAll('.nav button').forEach(b => b.classList.remove('active'));
+document.querySelector(`.nav .${module}-btn`).classList.add('active');
+questions = generateQuestions(module);
+showQuestion();
+}
+
+loadData();
+</script>
+</body>
+</html>

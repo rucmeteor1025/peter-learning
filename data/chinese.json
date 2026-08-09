@@ -1,0 +1,459 @@
+{
+  "meta": {
+    "grade": "一年级下学期",
+    "source": "一年级下册 + 暑假诗词复习",
+    "dailyCount": 10
+  },
+  "categories": [
+    {
+      "id": "nature",
+      "name": "自然",
+      "chars": [
+        {
+          "char": "春",
+          "pinyin": "chūn",
+          "stroke": 9,
+          "meaning": "春天",
+          "distractors": [
+            "夏",
+            "秋"
+          ]
+        },
+        {
+          "char": "风",
+          "pinyin": "fēng",
+          "stroke": 4,
+          "meaning": "春风",
+          "distractors": [
+            "雨",
+            "雪"
+          ]
+        },
+        {
+          "char": "花",
+          "pinyin": "huā",
+          "stroke": 7,
+          "meaning": "花朵",
+          "distractors": [
+            "草",
+            "树"
+          ]
+        },
+        {
+          "char": "雪",
+          "pinyin": "xuě",
+          "stroke": 11,
+          "meaning": "下雪",
+          "distractors": [
+            "雨",
+            "冰"
+          ]
+        },
+        {
+          "char": "雨",
+          "pinyin": "yǔ",
+          "stroke": 8,
+          "meaning": "下雨",
+          "distractors": [
+            "风",
+            "雪"
+          ]
+        },
+        {
+          "char": "树",
+          "pinyin": "shù",
+          "stroke": 9,
+          "meaning": "大树",
+          "distractors": [
+            "草",
+            "花"
+          ]
+        },
+        {
+          "char": "草",
+          "pinyin": "cǎo",
+          "stroke": 9,
+          "meaning": "小草",
+          "distractors": [
+            "花",
+            "树"
+          ]
+        },
+        {
+          "char": "叶",
+          "pinyin": "yè",
+          "stroke": 5,
+          "meaning": "树叶",
+          "distractors": [
+            "花",
+            "根"
+          ]
+        },
+        {
+          "char": "山",
+          "pinyin": "shān",
+          "stroke": 3,
+          "meaning": "大山",
+          "distractors": [
+            "水",
+            "土"
+          ]
+        },
+        {
+          "char": "水",
+          "pinyin": "shuǐ",
+          "stroke": 4,
+          "meaning": "河水",
+          "distractors": [
+            "火",
+            "土"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "body",
+      "name": "身体",
+      "chars": [
+        {
+          "char": "头",
+          "pinyin": "tóu",
+          "stroke": 5,
+          "meaning": "人头",
+          "distractors": [
+            "手",
+            "脚"
+          ]
+        },
+        {
+          "char": "手",
+          "pinyin": "shǒu",
+          "stroke": 4,
+          "meaning": "手心",
+          "distractors": [
+            "脚",
+            "头"
+          ]
+        },
+        {
+          "char": "足",
+          "pinyin": "zú",
+          "stroke": 7,
+          "meaning": "足球",
+          "distractors": [
+            "手",
+            "头"
+          ]
+        },
+        {
+          "char": "目",
+          "pinyin": "mù",
+          "stroke": 5,
+          "meaning": "目光",
+          "distractors": [
+            "口",
+            "耳"
+          ]
+        },
+        {
+          "char": "耳",
+          "pinyin": "ěr",
+          "stroke": 6,
+          "meaning": "耳朵",
+          "distractors": [
+            "眼",
+            "鼻"
+          ]
+        },
+        {
+          "char": "口",
+          "pinyin": "kǒu",
+          "stroke": 3,
+          "meaning": "入口",
+          "distractors": [
+            "耳",
+            "目"
+          ]
+        },
+        {
+          "char": "人",
+          "pinyin": "rén",
+          "stroke": 2,
+          "meaning": "人们",
+          "distractors": [
+            "大",
+            "小"
+          ]
+        },
+        {
+          "char": "心",
+          "pinyin": "xīn",
+          "stroke": 4,
+          "meaning": "开心",
+          "distractors": [
+            "手",
+            "脚"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "numbers",
+      "name": "数字",
+      "chars": [
+        {
+          "char": "一",
+          "pinyin": "yī",
+          "stroke": 1,
+          "meaning": "第一",
+          "distractors": [
+            "二",
+            "三"
+          ]
+        },
+        {
+          "char": "二",
+          "pinyin": "èr",
+          "stroke": 2,
+          "meaning": "第二",
+          "distractors": [
+            "一",
+            "三"
+          ]
+        },
+        {
+          "char": "三",
+          "pinyin": "sān",
+          "stroke": 3,
+          "meaning": "第三",
+          "distractors": [
+            "二",
+            "四"
+          ]
+        },
+        {
+          "char": "十",
+          "pinyin": "shí",
+          "stroke": 2,
+          "meaning": "十个",
+          "distractors": [
+            "千",
+            "百"
+          ]
+        },
+        {
+          "char": "千",
+          "pinyin": "qiān",
+          "stroke": 3,
+          "meaning": "千人",
+          "distractors": [
+            "万",
+            "百"
+          ]
+        },
+        {
+          "char": "百",
+          "pinyin": "bǎi",
+          "stroke": 6,
+          "meaning": "百天",
+          "distractors": [
+            "千",
+            "万"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "daily",
+      "name": "日常",
+      "chars": [
+        {
+          "char": "日",
+          "pinyin": "rì",
+          "stroke": 4,
+          "meaning": "日月",
+          "distractors": [
+            "月",
+            "年"
+          ]
+        },
+        {
+          "char": "月",
+          "pinyin": "yuè",
+          "stroke": 4,
+          "meaning": "月亮",
+          "distractors": [
+            "日",
+            "年"
+          ]
+        },
+        {
+          "char": "天",
+          "pinyin": "tiān",
+          "stroke": 4,
+          "meaning": "白天",
+          "distractors": [
+            "地",
+            "空"
+          ]
+        },
+        {
+          "char": "飞",
+          "pinyin": "fēi",
+          "stroke": 3,
+          "meaning": "飞鸟",
+          "distractors": [
+            "走",
+            "跳"
+          ]
+        },
+        {
+          "char": "坐",
+          "pinyin": "zuò",
+          "stroke": 7,
+          "meaning": "坐下",
+          "distractors": [
+            "站",
+            "跳"
+          ]
+        },
+        {
+          "char": "立",
+          "pinyin": "lì",
+          "stroke": 5,
+          "meaning": "站立",
+          "distractors": [
+            "坐",
+            "卧"
+          ]
+        },
+        {
+          "char": "走",
+          "pinyin": "zǒu",
+          "stroke": 7,
+          "meaning": "走路",
+          "distractors": [
+            "跑",
+            "跳"
+          ]
+        },
+        {
+          "char": "跑",
+          "pinyin": "pǎo",
+          "stroke": 12,
+          "meaning": "跑步",
+          "distractors": [
+            "走",
+            "跳"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "summer",
+      "name": "暑假诗词",
+      "chars": [
+        {
+          "char": "静",
+          "pinyin": "jìng",
+          "stroke": 14,
+          "meaning": "安静（静夜思）",
+          "distractors": [
+            "净",
+            "清"
+          ]
+        },
+        {
+          "char": "思",
+          "pinyin": "sī",
+          "stroke": 9,
+          "meaning": "想念（思故乡）",
+          "distractors": [
+            "想",
+            "念"
+          ]
+        },
+        {
+          "char": "霜",
+          "pinyin": "shuāng",
+          "stroke": 17,
+          "meaning": "地上白霜（疑是地上霜）",
+          "distractors": [
+            "雪",
+            "露"
+          ]
+        },
+        {
+          "char": "鹅",
+          "pinyin": "é",
+          "stroke": 12,
+          "meaning": "白鹅（咏鹅）",
+          "distractors": [
+            "鸭",
+            "鸡"
+          ]
+        },
+        {
+          "char": "莲",
+          "pinyin": "lián",
+          "stroke": 10,
+          "meaning": "莲花（江南可采莲）",
+          "distractors": [
+            "荷",
+            "花"
+          ]
+        },
+        {
+          "char": "锄",
+          "pinyin": "chú",
+          "stroke": 12,
+          "meaning": "锄头（锄禾日当午）",
+          "distractors": [
+            "铲",
+            "耙"
+          ]
+        },
+        {
+          "char": "餐",
+          "pinyin": "cān",
+          "stroke": 16,
+          "meaning": "饭食（盘中餐）",
+          "distractors": [
+            "饭",
+            "食"
+          ]
+        },
+        {
+          "char": "晓",
+          "pinyin": "xiǎo",
+          "stroke": 10,
+          "meaning": "天亮（春眠不觉晓）",
+          "distractors": [
+            "晚",
+            "明"
+          ]
+        },
+        {
+          "char": "泉",
+          "pinyin": "quán",
+          "stroke": 9,
+          "meaning": "泉水（泉眼无声）",
+          "distractors": [
+            "水",
+            "溪"
+          ]
+        },
+        {
+          "char": "蜻",
+          "pinyin": "qīng",
+          "stroke": 14,
+          "meaning": "蜻蜓（早有蜻蜓立上头）",
+          "distractors": [
+            "蝶",
+            "蜂"
+          ]
+        }
+      ]
+    }
+  ]
+}
