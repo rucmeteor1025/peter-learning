@@ -34,8 +34,12 @@ body{font-family:'PingFang SC','Noto Sans SC',sans-serif;background:#f5f7fa;colo
 .next-btn:active{background:#E55A2B}
 .score-card{background:#fff;border-radius:16px;padding:32px;text-align:center;box-shadow:0 2px 12px rgba(0,0,0,0.06)}
 .score-emoji{font-size:64px;margin-bottom:12px}
+.score-stars{font-size:34px;color:#FFB300;letter-spacing:6px;margin-bottom:6px;text-shadow:0 2px 6px rgba(255,179,0,.3)}
 .score-text{font-size:36px;font-weight:700;color:#FF6B35;margin-bottom:8px}
-.score-msg{font-size:16px;color:#666;margin-bottom:20px}
+.score-msg{font-size:16px;color:#666;margin-bottom:12px}
+.score-sub{font-size:13px;color:#999;margin-bottom:18px}
+.speak-btn{display:inline-block;margin:8px 0 4px;padding:7px 16px;background:#E3F2FD;color:#1976D2;border:none;border-radius:20px;font-size:13px;font-weight:600;cursor:pointer}
+.speak-btn:active{background:#BBDEFB}
 .restart-btn{padding:12px 32px;background:#FF6B35;color:#fff;border:none;border-radius:12px;font-size:16px;font-weight:600;cursor:pointer}
 .progress-bar{background:#e0e0e0;border-radius:10px;height:8px;margin-bottom:16px}
 .progress-fill{height:100%;border-radius:10px;transition:width 0.3s}
@@ -65,6 +69,7 @@ body{font-family:'PingFang SC','Noto Sans SC',sans-serif;background:#f5f7fa;colo
 <div class="header">
 <h1>🐻 Peter 学习小助手</h1>
 <div class="date" id="dateDisplay"></div>
+<div class="date" id="streakDisplay" style="margin-top:4px;font-weight:600"></div>
 </div>
 <div class="nav">
 <button class="en-btn" onclick="switchModule('en')">🇬🇧 英语</button>
@@ -79,8 +84,97 @@ body{font-family:'PingFang SC','Noto Sans SC',sans-serif;background:#f5f7fa;colo
 </div>
 </div>
 <script>
-const today = new Date().toISOString().slice(0, 10);
+function localDate() {
+const d = new Date();
+return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+}
+const today = localDate();
 document.getElementById('dateDisplay').textContent = new Date().toLocaleDateString('zh-CN', {year:'numeric',month:'long',day:'numeric',weekday:'long'});
+// 头部显示连续打卡
+function renderStreak() {
+try {
+const p = JSON.parse(localStorage.getItem('peter_progress') || '{}');
+const n = p.streak || 0;
+const el = document.getElementById('streakDisplay');
+if (el) el.textContent = n > 0 ? '🔥 已连续打卡 ' + n + ' 天' : '🌟 今天开始打卡吧';
+} catch(e) {}
+}
+renderStreak();
+
+// ===== 语音朗读（浏览器自带 TTS，无需联网）=====
+let voiceCn = null, voiceEn = null;
+function pickVoices() {
+const vs = window.speechSynthesis ? speechSynthesis.getVoices() : [];
+voiceCn = vs.find(v => v.lang && v.lang.toLowerCase().startsWith('zh')) || null;
+voiceEn = vs.find(v => v.lang && v.lang.toLowerCase().startsWith('en')) || null;
+}
+if ('speechSynthesis' in window) {
+pickVoices();
+speechSynthesis.onvoiceschanged = pickVoices;
+}
+function speak(text, lang) {
+if (!('speechSynthesis' in window) || !text) return;
+try {
+speechSynthesis.cancel();
+const u = new SpeechSynthesisUtterance(text);
+u.lang = lang || 'zh-CN';
+u.rate = (lang || '').startsWith('zh') ? 0.8 : 0.85;
+const v = (lang || '').startsWith('zh') ? voiceCn : voiceEn;
+if (v) u.voice = v;
+speechSynthesis.speak(u);
+} catch(e) {}
+}
+// 简单答题音效
+function playTone(ok) {
+try {
+const ctx = new (window.AudioContext || window.webkitAudioContext)();
+const osc = ctx.createOscillator();
+const gain = ctx.createGain();
+osc.connect(gain); gain.connect(ctx.destination);
+osc.type = 'sine';
+osc.frequency.value = ok ? 880 : 330;
+gain.gain.setValueAtTime(0.12, ctx.currentTime);
+gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.22);
+osc.start(); osc.stop(ctx.currentTime + 0.22);
+setTimeout(() => ctx.close(), 500);
+} catch(e) {}
+}
+
+// ===== 错题本（间隔重复：错的题优先再出）=====
+function loadWrong() { try { return JSON.parse(localStorage.getItem('peter_wrong') || '{}'); } catch(e) { return {}; } }
+function saveWrong(w) { try { localStorage.setItem('peter_wrong', JSON.stringify(w)); } catch(e) {} }
+function wrongKey(q) {
+if (currentModule === 'go') return 'go:' + q.id;
+if (currentModule === 'zh') return 'zh:' + q.char;
+return 'en:' + q.en;
+}
+function addWrong(q) {
+const w = loadWrong();
+const k = wrongKey(q);
+w[k] = (w[k] || 0) + 1;
+saveWrong(w);
+}
+function clearWrong(q) {
+const w = loadWrong();
+const k = wrongKey(q);
+if (w[k]) {
+w[k] -= 1;
+if (w[k] <= 0) delete w[k];
+saveWrong(w);
+}
+}
+// 从错题本取优先题（最多 3 道）
+function takeWrongFirst(allQuestions, makeQ) {
+const w = loadWrong();
+const keys = Object.keys(w).filter(k => w[k] > 0);
+if (!keys.length) return { first: [], rest: allQuestions };
+const wrongItems = allQuestions.filter(q => wrongKey(q) in w);
+const picked = [];
+const rest = allQuestions.filter(q => !wrongItems.includes(q));
+const pool = shuffle([...wrongItems]);
+while (picked.length < 3 && pool.length) picked.push(pool.pop());
+return { first: picked, rest };
+}
 
 let enData = null, zhData = null, goData = null;
 let currentModule = null, currentQ = 0, score = 0, questions = [];
@@ -108,30 +202,36 @@ return arr;
 }
 
 function generateQuestions(module) {
-if (module === 'en') {
-const allWords = [];
-enData.units.forEach(u => u.words.forEach(w => allWords.push({...w, unit: u.id})));
-const selected = shuffle([...allWords]).slice(0, 10);
-return selected.map(w => ({
-question: `${w.en}`,
-hint: `选择正确的中文意思`,
-options: shuffle([w.cn, ...w.distractors]),
-correct: w.cn
-}));
-} else if (module === 'zh') {
-const allChars = [];
-zhData.categories.forEach(c => c.chars.forEach(ch => allChars.push({...ch, cat: c.id})));
-const selected = shuffle([...allChars]).slice(0, 10);
-return selected.map(ch => ({
-question: `${ch.pinyin}`,
-hint: `${ch.stroke}画 · 选择正确的汉字`,
-options: shuffle([ch.char, ...ch.distractors]),
-correct: ch.char,
-char: ch.char,
-meaning: ch.meaning
-}));
+	if (module === 'en') {
+	const allWords = [];
+	enData.units.forEach(u => u.words.forEach(w => allWords.push({...w, unit: u.id})));
+	const base = allWords.map(w => ({
+	en: w.en,
+	question: `${w.en}`,
+	hint: `选择正确的中文意思`,
+	options: shuffle([w.cn, ...w.distractors]),
+	correct: w.cn
+	}));
+	const { first, rest } = takeWrongFirst(base, null);
+	const selected = shuffle([...first, ...shuffle(rest).slice(0, 10 - first.length)]);
+	return selected;
+	} else if (module === 'zh') {
+	const allChars = [];
+	zhData.categories.forEach(c => c.chars.forEach(ch => allChars.push({...ch, cat: c.id})));
+	const base = allChars.map(ch => ({
+	char: ch.char,
+	question: `${ch.pinyin}`,
+	hint: `${ch.stroke}画 · 选择正确的汉字`,
+	options: shuffle([ch.char, ...ch.distractors]),
+	correct: ch.char,
+	meaning: ch.meaning
+	}));
+	const { first, rest } = takeWrongFirst(base, null);
+	const selected = shuffle([...first, ...shuffle(rest).slice(0, 10 - first.length)]);
+	return selected;
 	} else {
-	const selected = shuffle([...goData.puzzles]).slice(0, 10);
+	const { first, rest } = takeWrongFirst(goData.puzzles, null);
+	const selected = shuffle([...first, ...shuffle(rest)]).slice(0, 10);
 	return selected.map(p => {
 	const letters = 'ABCDEFGH';
 	const correctLabel = letters[p.answer.col] + (p.size - p.answer.row);
@@ -219,6 +319,14 @@ const fillCls = {en: 'en-fill', zh: 'zh-fill', go: 'go-fill'};
 	extra = renderBoard(q);
 	}
 
+	// 朗读按钮：英语读单词/短句，语文读汉字
+	let speakBtn = '';
+	if (currentModule === 'en') {
+	speakBtn = `<button class="speak-btn" onclick="speak('${q.question.replace(/'/g, "\\'")}','en-US')">🔊 听发音</button>`;
+	} else if (currentModule === 'zh' && q.char) {
+	speakBtn = `<button class="speak-btn" onclick="speak('${q.char}','zh-CN')">🔊 听一听</button>`;
+	}
+
 	let optionHtml;
 	if (currentModule === 'go') {
 	optionHtml = q.cells.map((cell, i) =>
@@ -239,6 +347,7 @@ const fillCls = {en: 'en-fill', zh: 'zh-fill', go: 'go-fill'};
 	<div class="q-number">第 ${currentQ + 1} / 10 题</div>
 	<div class="q-prompt">${q.question}</div>
 	<div class="hint">${q.hint}</div>
+	${speakBtn}
 	${extra}
 	</div>
 	${goTip}
@@ -262,8 +371,15 @@ function checkAnswer(idx) {
 	if (isCorrect) {
 	opt.classList.add('correct');
 	score++;
+	playTone(true);
+	clearWrong(q);
+	// 答对：从错题本消掉一次（zh/en 顺便朗读）
+	if (currentModule === 'zh' && q.char) speak(q.char, 'zh-CN');
+	if (currentModule === 'en' && q.en) speak(q.en, 'en-US');
 	} else {
 	opt.classList.add('wrong');
+	playTone(false);
+	addWrong(q);
 	q.options.forEach((o, i) => {
 	if (o === q.correct) {
 	document.getElementById('opt-' + i).classList.add('show-correct');
@@ -302,17 +418,38 @@ const content = document.getElementById('content');
 const emoji = score >= 9 ? '🏆' : score >= 7 ? '⭐' : score >= 5 ? '👍' : '💪';
 const msg = score >= 9 ? '太棒了！完美！' : score >= 7 ? '不错！继续加油！' : score >= 5 ? '还可以，再练练！' : '没关系，明天继续！';
 
+// 星级：≥9 三星，≥7 两星，≥5 一星
+const stars = score >= 9 ? 3 : score >= 7 ? 2 : score >= 5 ? 1 : 0;
+const starHtml = '★'.repeat(stars) + '☆'.repeat(3 - stars);
+
+// 记录成绩 + 连续打卡
 const progress = JSON.parse(localStorage.getItem('peter_progress') || '{}');
 if (!progress[today]) progress[today] = {};
 progress[today][currentModule] = score;
+const last = progress.lastDate || '';
+if (last !== today) {
+const y = new Date(Date.now() - 86400000);
+const yesterday = y.getFullYear() + '-' + String(y.getMonth() + 1).padStart(2, '0') + '-' + String(y.getDate()).padStart(2, '0');
+progress.streak = (last === yesterday ? (progress.streak || 0) : 0) + 1;
+progress.lastDate = today;
+}
 localStorage.setItem('peter_progress', JSON.stringify(progress));
+renderStreak();
+
+// 本轮错题数（提示进了错题本）
+const wrongMap = loadWrong();
+const wrongCount = questions.filter(q => wrongMap[wrongKey(q)] > 0).length;
+const wrongNote = wrongCount > 0 ? `<div class="score-sub">📒 有 ${wrongCount} 题进了错题本，下次练习会优先出现</div>` : '';
 
 content.innerHTML = `
 <div class="fade-in">
 <div class="score-card">
 <div class="score-emoji">${emoji}</div>
+<div class="score-stars">${starHtml}</div>
 <div class="score-text">${score} / 10</div>
 <div class="score-msg">${msg}</div>
+<div class="score-sub">🔥 已连续打卡 ${progress.streak || 0} 天</div>
+${wrongNote}
 <button class="restart-btn" onclick="switchModule('${currentModule}')">再做一次</button>
 </div>
 </div>
