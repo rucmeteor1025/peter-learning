@@ -283,38 +283,15 @@ function startZhMode(mode) {
 }
 
 // ===== 数学口算题（填空式，Kidjent 风格 + 常见错误干扰项）=====
-function genMathQuestion() {
-// 难度：0=20以内 1=100以内进退位（轮内前 5 题简单，后 5 题标准）
-const hard = currentQ >= 5;
-let b, c, ans, text, op, a2, hid;
-if (Math.random() < 0.5) {
-// 加法 a + b = c
-const a = hard ? 11 + Math.floor(Math.random() * 70) : 2 + Math.floor(Math.random() * 16);
-b = hard ? 11 + Math.floor(Math.random() * 70) : 2 + Math.floor(Math.random() * 16);
-c = a + b;
-op = '+';
-hid = Math.floor(Math.random() * 3);
-if (hid === 0) { text = '__ + ' + b + ' = ' + c; ans = a; }
-else if (hid === 1) { text = a + ' + __ = ' + c; ans = b; }
-else { text = a + ' + ' + b + ' = __'; ans = c; }
-} else {
-// 减法 a - b = c（保证 a<=99 且 a>b）
-b = hard ? 5 + Math.floor(Math.random() * 45) : 1 + Math.floor(Math.random() * 9);
-c = hard ? 5 + Math.floor(Math.random() * 40) : 1 + Math.floor(Math.random() * 15);
-a2 = b + c;
-op = '-';
-hid = Math.floor(Math.random() * 3);
-if (hid === 0) { text = '__ - ' + b + ' = ' + c; ans = a2; }
-else if (hid === 1) { text = a2 + ' - __ = ' + c; ans = b; }
-else { text = a2 + ' - ' + b + ' = __'; ans = c; }
-}
-// 干扰项：±1/±10/进退位常见错误，保证唯一且 >=0
+// ===== 数学口算题生成器（一年级下学期标准）=====
+// 题型分布：0-1 热身(20以内) · 2-3 进位加 · 4-5 退位减 · 6-7 连加连减 · 8-9 应用题
+function makeOptions(ans) {
+// 干扰项：±1/±10/进退位常见错误（进位忘加、借位忘减 → ±9），保证唯一且 >=0
 const wrongs = new Set();
-const cands = [ans + 1, ans - 1, ans + 10, ans - 10, ans + 2, ans - 2];
-if (hard) cands.push(ans + 9, ans - 9);
+const cands = [ans + 1, ans - 1, ans + 10, ans - 10, ans + 9, ans - 9, ans + 2, ans - 2];
 for (const c2 of cands) {
 if (wrongs.size >= 3) break;
-if (c2 !== ans && c2 >= 0 && c2 <= 100) wrongs.add(c2);
+if (c2 !== ans && c2 >= 0 && c2 <= 120) wrongs.add(c2);
 }
 let filler = 1;
 while (wrongs.size < 3) {
@@ -322,21 +299,127 @@ const c2 = ans + filler;
 if (c2 !== ans && c2 >= 0) wrongs.add(c2);
 filler++;
 }
-const options = shuffle([ans, ...wrongs]);
-let full;
-if (op === '+') {
-full = hid === 0 ? ans + ' + ' + b + ' = ' + c : hid === 1 ? a2 + ' + ' + ans + ' = ' + c : a2 + ' + ' + b + ' = ' + ans;
-} else {
-full = hid === 0 ? ans + ' - ' + b + ' = ' + c : hid === 1 ? a2 + ' - ' + ans + ' = ' + c : a2 + ' - ' + b + ' = ' + ans;
+return shuffle([ans, ...wrongs]).map(String);
 }
-return {
-math: true,
-question: text,
-hint: hard ? '100 以内进退位' : '20 以内口算',
-options: options.map(String),
-correct: String(ans),
-explanation: full
-};
+// 20 以内加减（热身）
+function genTwentyQuestion() {
+const add = Math.random() < 0.5;
+let ans, text, full;
+if (add) {
+const a = 2 + Math.floor(Math.random() * 9);
+const b = 2 + Math.floor(Math.random() * (18 - a));
+ans = a + b;
+text = a + ' + ' + b + ' = __';
+full = a + ' + ' + b + ' = ' + ans;
+} else {
+const a = 6 + Math.floor(Math.random() * 14);
+const b = 1 + Math.floor(Math.random() * (a - 1));
+ans = a - b;
+text = a + ' - ' + b + ' = __';
+full = a + ' - ' + b + ' = ' + ans;
+}
+return { math: true, question: text, hint: '20 以内口算', options: makeOptions(ans), correct: String(ans), explanation: full };
+}
+// 100 以内进位加法（强制个位相加 ≥10）或退位减法（强制个位不够减），填空式
+function genHundredQuestion(add) {
+let a, b, c, ans, text, full, hid;
+if (add) {
+// 十位 1-6，个位 4-9 + 个位 3-8 → 必进位
+const t1 = 1 + Math.floor(Math.random() * 6);
+const u1 = 4 + Math.floor(Math.random() * 6);
+const t2 = 1 + Math.floor(Math.random() * 6);
+const u2 = 3 + Math.floor(Math.random() * 6);
+a = t1 * 10 + u1;
+b = t2 * 10 + u2;
+c = a + b;
+hid = Math.floor(Math.random() * 3);
+if (hid === 0) { text = '__ + ' + b + ' = ' + c; ans = a; }
+else if (hid === 1) { text = a + ' + __ = ' + c; ans = b; }
+else { text = a + ' + ' + b + ' = __'; ans = c; }
+full = a + ' + ' + b + ' = ' + c;
+} else {
+// 被减数十位 3-8 个位 1-4；减数十位 1-5 个位 6-9 → 必退位
+const t1 = 3 + Math.floor(Math.random() * 6);
+const u1 = 1 + Math.floor(Math.random() * 4);
+const t2 = 1 + Math.floor(Math.random() * Math.min(5, t1 - 1));
+const u2 = 6 + Math.floor(Math.random() * 4);
+a = t1 * 10 + u1;
+b = t2 * 10 + u2;
+c = a - b;
+hid = Math.floor(Math.random() * 3);
+if (hid === 0) { text = '__ - ' + b + ' = ' + c; ans = a; }
+else if (hid === 1) { text = a + ' - __ = ' + c; ans = b; }
+else { text = a + ' - ' + b + ' = __'; ans = c; }
+full = a + ' - ' + b + ' = ' + c;
+}
+return { math: true, question: text, hint: add ? '100 以内进位加法' : '100 以内退位减法', options: makeOptions(ans), correct: String(ans), explanation: full };
+}
+// 连加连减、加减混合
+function genChainQuestion() {
+const kind = Math.floor(Math.random() * 3);
+let a, b, c, ans, text, full;
+if (kind === 0) {
+a = 15 + Math.floor(Math.random() * 40);
+b = 10 + Math.floor(Math.random() * 30);
+c = 10 + Math.floor(Math.random() * 20);
+ans = a + b + c;
+text = a + ' + ' + b + ' + ' + c + ' = __';
+full = text.replace('__', ans);
+} else if (kind === 1) {
+a = 60 + Math.floor(Math.random() * 35);
+b = 10 + Math.floor(Math.random() * 25);
+c = 10 + Math.floor(Math.random() * 20);
+ans = a - b - c;
+if (ans < 0) { ans = a - b; text = a + ' - ' + b + ' = __'; full = a + ' - ' + b + ' = ' + ans; }
+else { text = a + ' - ' + b + ' - ' + c + ' = __'; full = a + ' - ' + b + ' - ' + c + ' = ' + ans; }
+} else {
+a = 30 + Math.floor(Math.random() * 40);
+b = 10 + Math.floor(Math.random() * 20);
+c = 10 + Math.floor(Math.random() * 25);
+ans = a + b - c;
+if (ans < 0) { ans = a + b; text = a + ' + ' + b + ' = __'; full = a + ' + ' + b + ' = ' + ans; }
+else { text = a + ' + ' + b + ' - ' + c + ' = __'; full = a + ' + ' + b + ' - ' + c + ' = ' + ans; }
+}
+return { math: true, question: text, hint: '连加连减 · 从左往右算', options: makeOptions(ans), correct: String(ans), explanation: full };
+}
+// 应用题（求总数 / 求剩余 / 求相差 —— 一年级下学期重点）
+function genAppQuestion() {
+const kind = Math.floor(Math.random() * 3);
+let text, ans, full;
+	if (kind === 0) {
+	const a = 15 + Math.floor(Math.random() * 35);
+	const b = 10 + Math.floor(Math.random() * 25);
+	ans = a + b;
+	const name = ['小明', '小红', '小刚', '小丽'][Math.floor(Math.random() * 4)];
+	const things = [['贴纸', '张'], ['画片', '张'], ['铅笔', '支'], ['糖果', '颗'], ['气球', '个']];
+	const [thing, cl] = things[Math.floor(Math.random() * things.length)];
+	text = '📝 ' + name + '有 ' + a + ' ' + cl + thing + '，又得到 ' + b + ' ' + cl + '，一共有多少' + cl + '？';
+	full = a + ' + ' + b + ' = ' + ans + '（求总数用加法）';
+	} else if (kind === 1) {
+	const a = 25 + Math.floor(Math.random() * 35);
+	const b = 10 + Math.floor(Math.random() * 20);
+	ans = a - b;
+	const things = [['苹果', '个'], ['气球', '个'], ['铅笔', '支'], ['书', '本'], ['糖果', '颗']];
+	const [thing, cl] = things[Math.floor(Math.random() * things.length)];
+	text = '📝 篮子里有 ' + a + ' ' + cl + thing + '，吃了 ' + b + ' ' + cl + '，还剩多少' + cl + '？';
+	full = a + ' - ' + b + ' = ' + ans + '（求剩余用减法）';
+	} else {
+const a = 25 + Math.floor(Math.random() * 30);
+const b = 10 + Math.floor(Math.random() * 15);
+ans = a - b;
+const n1 = ['小红', '小明', '小丽'][Math.floor(Math.random() * 3)];
+const n2 = ['小刚', '小华', '小军'][Math.floor(Math.random() * 3)];
+text = '📝 ' + n1 + '有 ' + a + ' 颗糖，' + n2 + '有 ' + b + ' 颗糖，' + n1 + '比' + n2 + '多几颗？';
+full = a + ' - ' + b + ' = ' + ans + '（求相差用减法）';
+}
+return { math: true, question: text, hint: '应用题 · 先找关键词（一共/还剩/多几颗）', options: makeOptions(ans), correct: String(ans), explanation: full };
+}
+function genMathQuestion(qi) {
+if (qi < 2) return genTwentyQuestion();       // 0-1 热身
+if (qi < 4) return genHundredQuestion(true);  // 2-3 进位加法
+if (qi < 6) return genHundredQuestion(false); // 4-5 退位减法
+if (qi < 8) return genChainQuestion();        // 6-7 连加连减
+return genAppQuestion();                      // 8-9 应用题
 }
 
 async function loadData() {
@@ -364,7 +447,7 @@ return arr;
 
 function generateQuestions(module) {
 	if (module === 'math') {
-	return Array.from({length: 10}, () => genMathQuestion());
+	return Array.from({length: 10}, (_, i) => genMathQuestion(i));
 	}
 	if (module === 'en') {
 	const allWords = [];
