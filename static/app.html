@@ -16,8 +16,14 @@ body{font-family:'PingFang SC','Noto Sans SC',sans-serif;background:#f5f7fa;colo
 .nav .en-btn.active,.nav .en-btn:active{background:#1976D2;color:#fff}
 .nav .zh-btn{background:#FFF3E0;color:#E65100}
 .nav .zh-btn.active,.nav .zh-btn:active{background:#E65100;color:#fff}
+.nav .math-btn{background:#E8F5E9;color:#2E7D32}
+.nav .math-btn.active,.nav .math-btn:active{background:#2E7D32;color:#fff}
 .nav .go-btn{background:#F3E5F5;color:#7B1FA2}
 .nav .go-btn.active,.nav .go-btn:active{background:#7B1FA2;color:#fff}
+.lives{font-size:18px;letter-spacing:4px;margin-bottom:10px;text-align:center}
+.lives .lost{opacity:.25;filter:grayscale(1)}
+.math-prompt{font-size:30px;font-weight:700;text-align:center;margin:8px 0 4px;letter-spacing:2px;color:#2E7D32}
+.math-unknown{color:#FF6B35;border-bottom:3px solid #FF6B35;padding:0 2px}
 .content{padding:16px;max-width:500px;margin:0 auto}
 .question-card{background:#fff;border-radius:16px;padding:24px;margin-bottom:16px;box-shadow:0 2px 12px rgba(0,0,0,0.06)}
 .q-number{font-size:13px;color:#999;margin-bottom:8px}
@@ -53,6 +59,7 @@ body{font-family:'PingFang SC','Noto Sans SC',sans-serif;background:#f5f7fa;colo
 .progress-fill{height:100%;border-radius:10px;transition:width 0.3s}
 .en-fill{background:#1976D2}
 .zh-fill{background:#E65100}
+.math-fill{background:#2E7D32}
 .go-fill{background:#7B1FA2}
 .board{display:inline-grid;gap:1px;background:#DEB887;padding:8px;border-radius:8px;margin:0 auto}
 .cell{display:flex;align-items:center;justify-content:center;border-radius:50%;font-size:12px;font-weight:700;cursor:pointer}
@@ -82,6 +89,7 @@ body{font-family:'PingFang SC','Noto Sans SC',sans-serif;background:#f5f7fa;colo
 <div class="nav">
 <button class="en-btn" onclick="switchModule('en')">🇬🇧 英语</button>
 <button class="zh-btn" onclick="switchModule('zh')">📖 语文</button>
+<button class="math-btn" onclick="switchModule('math')">🧮 数学</button>
 <button class="go-btn" onclick="switchModule('go')">⚫ 围棋</button>
 </div>
 <div class="content" id="content">
@@ -154,17 +162,20 @@ function saveWrong(w) { try { localStorage.setItem('peter_wrong', JSON.stringify
 function wrongKey(q) {
 if (currentModule === 'go') return 'go:' + q.id;
 if (currentModule === 'zh') return 'zh:' + q.char;
+if (currentModule === 'math') return null; // 随机口算题不重样，不进错题本
 return 'en:' + q.en;
 }
 function addWrong(q) {
-const w = loadWrong();
 const k = wrongKey(q);
+if (!k) return;
+const w = loadWrong();
 w[k] = (w[k] || 0) + 1;
 saveWrong(w);
 }
 function clearWrong(q) {
-const w = loadWrong();
 const k = wrongKey(q);
+if (!k) return;
+const w = loadWrong();
 if (w[k]) {
 w[k] -= 1;
 if (w[k] <= 0) delete w[k];
@@ -187,6 +198,65 @@ return { first: picked, rest };
 let enData = null, zhData = null, goData = null;
 let currentModule = null, currentQ = 0, score = 0, questions = [];
 let answered = false;
+let lives = 3;          // ❤️ 生命值（Kidjent 式 3 条命）
+let autoTimer = null;   // 自动下一题计时器
+
+// ===== 数学口算题（填空式，Kidjent 风格 + 常见错误干扰项）=====
+function genMathQuestion() {
+// 难度：0=20以内 1=100以内进退位（轮内前 5 题简单，后 5 题标准）
+const hard = currentQ >= 5;
+let b, c, ans, text, op, a2, hid;
+if (Math.random() < 0.5) {
+// 加法 a + b = c
+const a = hard ? 11 + Math.floor(Math.random() * 70) : 2 + Math.floor(Math.random() * 16);
+b = hard ? 11 + Math.floor(Math.random() * 70) : 2 + Math.floor(Math.random() * 16);
+c = a + b;
+op = '+';
+hid = Math.floor(Math.random() * 3);
+if (hid === 0) { text = '__ + ' + b + ' = ' + c; ans = a; }
+else if (hid === 1) { text = a + ' + __ = ' + c; ans = b; }
+else { text = a + ' + ' + b + ' = __'; ans = c; }
+} else {
+// 减法 a - b = c（保证 a<=99 且 a>b）
+b = hard ? 5 + Math.floor(Math.random() * 45) : 1 + Math.floor(Math.random() * 9);
+c = hard ? 5 + Math.floor(Math.random() * 40) : 1 + Math.floor(Math.random() * 15);
+a2 = b + c;
+op = '-';
+hid = Math.floor(Math.random() * 3);
+if (hid === 0) { text = '__ - ' + b + ' = ' + c; ans = a2; }
+else if (hid === 1) { text = a2 + ' - __ = ' + c; ans = b; }
+else { text = a2 + ' - ' + b + ' = __'; ans = c; }
+}
+// 干扰项：±1/±10/进退位常见错误，保证唯一且 >=0
+const wrongs = new Set();
+const cands = [ans + 1, ans - 1, ans + 10, ans - 10, ans + 2, ans - 2];
+if (hard) cands.push(ans + 9, ans - 9);
+for (const c2 of cands) {
+if (wrongs.size >= 3) break;
+if (c2 !== ans && c2 >= 0 && c2 <= 100) wrongs.add(c2);
+}
+let filler = 1;
+while (wrongs.size < 3) {
+const c2 = ans + filler;
+if (c2 !== ans && c2 >= 0) wrongs.add(c2);
+filler++;
+}
+const options = shuffle([ans, ...wrongs]);
+let full;
+if (op === '+') {
+full = hid === 0 ? ans + ' + ' + b + ' = ' + c : hid === 1 ? a2 + ' + ' + ans + ' = ' + c : a2 + ' + ' + b + ' = ' + ans;
+} else {
+full = hid === 0 ? ans + ' - ' + b + ' = ' + c : hid === 1 ? a2 + ' - ' + ans + ' = ' + c : a2 + ' - ' + b + ' = ' + ans;
+}
+return {
+math: true,
+question: text,
+hint: hard ? '100 以内进退位' : '20 以内口算',
+options: options.map(String),
+correct: String(ans),
+explanation: full
+};
+}
 
 async function loadData() {
 try {
@@ -210,6 +280,9 @@ return arr;
 }
 
 function generateQuestions(module) {
+	if (module === 'math') {
+	return Array.from({length: 10}, () => genMathQuestion());
+	}
 	if (module === 'en') {
 	const allWords = [];
 	enData.units.forEach(u => u.words.forEach(w => allWords.push({...w, unit: u.id})));
@@ -317,12 +390,14 @@ function goCellClick(r, c) {
 function showQuestion() {
 const q = questions[currentQ];
 const content = document.getElementById('content');
-const colors = {en: '#1976D2', zh: '#E65100', go: '#7B1FA2'};
-const fillCls = {en: 'en-fill', zh: 'zh-fill', go: 'go-fill'};
+const colors = {en: '#1976D2', zh: '#E65100', math: '#2E7D32', go: '#7B1FA2'};
+const fillCls = {en: 'en-fill', zh: 'zh-fill', math: 'math-fill', go: 'go-fill'};
 
 	let extra = '';
 	if (currentModule === 'zh' && q.char) {
 	extra = `<div class="q-char">${q.char}</div>`;
+	} else if (currentModule === 'math') {
+	extra = `<div class="math-prompt">${q.question.replace('__', '<span class="math-unknown">__</span>')}</div>`;
 	} else if (currentModule === 'go') {
 	extra = renderBoard(q);
 	}
@@ -347,10 +422,13 @@ const fillCls = {en: 'en-fill', zh: 'zh-fill', go: 'go-fill'};
 	}
 
 	const goTip = currentModule === 'go' ? '<div class="go-tip">👆 点击棋盘上带圈的位置答题（也可以点下面的圈号）</div>' : '';
+	// 生命值显示（Kidjent 式 3 条命）
+	const livesHtml = '<div class="lives">' + [0, 1, 2].map(i => '<span class="' + (i < lives ? '' : 'lost') + '">❤️</span>').join('') + '</div>';
 
 	content.innerHTML = `
 	<div class="fade-in">
 	<div class="progress-bar"><div class="progress-fill ${fillCls[currentModule]}" style="width:${(currentQ + 1) / 10 * 100}%"></div></div>
+	${livesHtml}
 	<div class="question-card">
 	<div class="q-number">第 ${currentQ + 1} / 10 题</div>
 	<div class="q-prompt">${q.question}</div>
@@ -388,6 +466,11 @@ function checkAnswer(idx) {
 	opt.classList.add('wrong');
 	playTone(false);
 	addWrong(q);
+	lives--;
+	const livesEl = document.querySelector('.lives');
+	if (livesEl) {
+	livesEl.innerHTML = [0, 1, 2].map(i => '<span class="' + (i < lives ? '' : 'lost') + '">❤️</span>').join('');
+	}
 	q.options.forEach((o, i) => {
 	if (o === q.correct) {
 	document.getElementById('opt-' + i).classList.add('show-correct');
@@ -410,15 +493,26 @@ function checkAnswer(idx) {
 	}
 	document.getElementById('explanation').classList.remove('hidden');
 	document.getElementById('nextBtn').style.display = 'block';
+	// ⚡ 自动下一题（Kidjent 式即时节奏）：答对 0.6s，答错 1.8s（围棋看解释留 2.2s）
+	clearTimeout(autoTimer);
+	const delay = isCorrect ? 600 : (currentModule === 'go' ? 2200 : 1800);
+	autoTimer = setTimeout(() => {
+	if (lives <= 0) {
+	showResults(true);
+	} else {
+	nextQuestion();
+	}
+	}, delay);
 }
 
 function nextQuestion() {
-currentQ++;
-if (currentQ >= 10) {
-showResults();
-return;
-}
-showQuestion();
+	clearTimeout(autoTimer);
+	currentQ++;
+	if (currentQ >= 10 || lives <= 0) {
+	showResults(lives <= 0);
+	return;
+	}
+	showQuestion();
 }
 
 // 本周打卡日历（周一~周日，当天练了几科就几级绿）
@@ -444,10 +538,10 @@ html += '</div></div>';
 return html;
 }
 
-function showResults() {
+function showResults(early) {
 const content = document.getElementById('content');
-const emoji = score >= 9 ? '🏆' : score >= 7 ? '⭐' : score >= 5 ? '👍' : '💪';
-const msg = score >= 9 ? '太棒了！完美！' : score >= 7 ? '不错！继续加油！' : score >= 5 ? '还可以，再练练！' : '没关系，明天继续！';
+const emoji = early ? '💔' : score >= 9 ? '🏆' : score >= 7 ? '⭐' : score >= 5 ? '👍' : '💪';
+const msg = early ? '生命耗尽！下次小心点' : score >= 9 ? '太棒了！完美！' : score >= 7 ? '不错！继续加油！' : score >= 5 ? '还可以，再练练！' : '没关系，明天继续！';
 
 // 星级：≥9 三星，≥7 两星，≥5 一星
 const stars = score >= 9 ? 3 : score >= 7 ? 2 : score >= 5 ? 1 : 0;
@@ -471,6 +565,7 @@ renderStreak();
 const wrongMap = loadWrong();
 const wrongCount = questions.filter(q => wrongMap[wrongKey(q)] > 0).length;
 const wrongNote = wrongCount > 0 ? `<div class="score-sub">📒 有 ${wrongCount} 题进了错题本，下次练习会优先出现</div>` : '';
+const livesLeft = lives > 0 ? `<div class="score-sub">❤️ 还剩 ${lives} 条命</div>` : '';
 
 content.innerHTML = `
 <div class="fade-in">
@@ -480,22 +575,25 @@ content.innerHTML = `
 <div class="score-text">${score} / 10</div>
 <div class="score-msg">${msg}</div>
 <div class="score-sub">🔥 已连续打卡 ${progress.streak || 0} 天</div>
+${livesLeft}
 ${weekCalendar()}
 ${wrongNote}
-<button class="restart-btn" onclick="switchModule('${currentModule}')">再做一次</button>
+<button class="restart-btn" onclick="switchModule('${currentModule}')">再来一局</button>
 </div>
 </div>
 `;
 }
 
 function switchModule(module) {
-currentModule = module;
-currentQ = 0;
-score = 0;
-document.querySelectorAll('.nav button').forEach(b => b.classList.remove('active'));
-document.querySelector(`.nav .${module}-btn`).classList.add('active');
-questions = generateQuestions(module);
-showQuestion();
+	currentModule = module;
+	currentQ = 0;
+	score = 0;
+	lives = 3;
+	clearTimeout(autoTimer);
+	document.querySelectorAll('.nav button').forEach(b => b.classList.remove('active'));
+	document.querySelector(`.nav .${module}-btn`).classList.add('active');
+	questions = generateQuestions(module);
+	showQuestion();
 }
 
 loadData();
