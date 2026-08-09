@@ -74,6 +74,22 @@ body{font-family:'PingFang SC','Noto Sans SC',sans-serif;background:#f5f7fa;colo
 .go-labels-col{display:grid;gap:1px}
 .go-labels-row{display:grid;gap:1px}
 .go-tip{font-size:12px;color:#888;margin-top:8px;text-align:center}
+.board.dark{background:#4E342E}
+.board.dark .cell-empty{border:1px dashed rgba(255,255,255,0.3)}
+.board.dark .go-labels{color:#d7b98c}
+.star-point{width:7px;height:7px;border-radius:50%;background:rgba(0,0,0,0.55)}
+.board.dark .star-point{background:rgba(255,255,255,0.6)}
+.theme-btn{display:inline-block;margin:8px 4px 0;padding:5px 12px;background:#F3E5F5;color:#7B1FA2;border:none;border-radius:16px;font-size:12px;font-weight:600;cursor:pointer}
+.theme-btn.active{background:#7B1FA2;color:#fff}
+.combo{display:inline-block;margin-left:8px;font-size:13px;color:#E65100;font-weight:700}
+.hint-btn{display:inline-block;margin:6px 0 4px;padding:5px 14px;background:#FFF8E1;color:#B26A00;border:none;border-radius:16px;font-size:12px;font-weight:600;cursor:pointer}
+.hint-reveal{margin:8px 0 0;padding:8px 12px;background:#FFF8E1;color:#8D6E00;border-radius:10px;font-size:13px;font-weight:600;text-align:center}
+.go-topic-picker{max-width:480px;margin:0 auto;padding:16px}
+.go-topic-picker .tp-card{background:#fff;border-radius:16px;box-shadow:0 2px 10px rgba(0,0,0,.06);padding:16px;margin-bottom:12px;display:flex;align-items:center;gap:14px;cursor:pointer}
+.go-topic-picker .tp-card:active{transform:scale(.97)}
+.go-topic-picker .tp-ico{font-size:30px;width:52px;height:52px;display:flex;align-items:center;justify-content:center;border-radius:13px;background:#F3E5F5;flex-shrink:0}
+.go-topic-picker h3{font-size:16px;font-weight:700}
+.go-topic-picker p{font-size:12px;color:#888;margin-top:2px}
 .hint{font-size:13px;color:#888;margin-top:4px}
 .hidden{display:none}
 .fade-in{animation:fadeIn 0.3s ease}
@@ -200,6 +216,7 @@ let currentModule = null, currentQ = 0, score = 0, questions = [];
 let answered = false;
 let lives = 3;          // ❤️ 生命值（Kidjent 式 3 条命）
 let autoTimer = null;   // 自动下一题计时器
+let combo = 0;          // 🔥 连击数（katrain 训练感）
 
 // ===== 数学口算题（填空式，Kidjent 风格 + 常见错误干扰项）=====
 function genMathQuestion() {
@@ -311,7 +328,11 @@ function generateQuestions(module) {
 	const selected = shuffle([...first, ...shuffle(rest).slice(0, 10 - first.length)]);
 	return selected;
 	} else {
-	const { first, rest } = takeWrongFirst(goData.puzzles, null);
+	let pool = goData.puzzles;
+	if (goTopic !== 'all') {
+	pool = pool.filter(p => GO_THEME_MAP[p.theme] === goTopic);
+	}
+	const { first, rest } = takeWrongFirst(pool, null);
 	const selected = shuffle([...first, ...shuffle(rest)]).slice(0, 10);
 	return selected.map(p => {
 	const letters = 'ABCDEFGH';
@@ -340,11 +361,30 @@ function generateQuestions(module) {
 	}
 }
 
+function isStarPoint(sz, r, c) {
+	if (sz === 3) return r === 1 && c === 1;
+	if (sz === 5) return r === 2 && c === 2;
+	if (sz === 7) return (r === 1 || r === 5) && (c === 1 || c === 5);
+	return false;
+}
+// 棋盘主题（kaya 风格）：经典木色 / 深色
+function boardTheme() {
+try { return localStorage.getItem('peter_board_theme') || 'light'; } catch(e) { return 'light'; }
+}
+function toggleBoardTheme() {
+const next = boardTheme() === 'light' ? 'dark' : 'light';
+try { localStorage.setItem('peter_board_theme', next); } catch(e) {}
+const board = document.querySelector('.board');
+if (board) board.classList.toggle('dark', next === 'dark');
+const btn = document.getElementById('themeBtn');
+if (btn) btn.textContent = next === 'dark' ? '🎨 浅色棋盘' : '🎨 深色棋盘';
+}
 function renderBoard(puzzle) {
 	const sz = puzzle.size;
 	const cellSize = Math.min(36, (300 / sz));
 	const letters = 'ABCDEFGH';
 	const cells = puzzle.cells || [];
+	const darkCls = boardTheme() === 'dark' ? ' dark' : '';
 	// 列字母标注（A B C ...）
 	let colLabels = '<div class="go-labels" style="grid-template-columns:repeat(' + sz + ',' + cellSize + 'px);grid-column:2;display:grid;gap:1px">';
 	for (let c = 0; c < sz; c++) {
@@ -361,7 +401,7 @@ function renderBoard(puzzle) {
 	let html = '<div style="margin:12px auto;display:inline-block">';
 	html += '<div style="display:grid;grid-template-columns:' + cellSize + 'px auto;grid-template-rows:' + (cellSize / 2) + 'px auto;gap:0">';
 	html += '<div></div>' + colLabels + rowLabels;
-	html += '<div class="board" style="grid-template-columns:repeat(' + sz + ',' + cellSize + 'px);max-width:' + (sz * cellSize + 16) + 'px">';
+	html += '<div class="board' + darkCls + '" style="grid-template-columns:repeat(' + sz + ',' + cellSize + 'px);max-width:' + (sz * cellSize + 16) + 'px">';
 	for (let r = 0; r < sz; r++) {
 	for (let c = 0; c < sz; c++) {
 	const stone = puzzle.board[r][c];
@@ -372,6 +412,9 @@ function renderBoard(puzzle) {
 	if (candIdx >= 0) {
 	candCls = ' cell-cand';
 	inner = '<span class="cand-num">' + (candIdx + 1) + '</span>';
+	} else if (stone === '.' && isStarPoint(sz, r, c)) {
+	// 星位标记（Sabaki/标准棋盘）
+	inner = '<span class="star-point"></span>';
 	}
 	html += '<div class="cell ' + cls + candCls + '" id="gocell-' + r + '-' + c + '" onclick="goCellClick(' + r + ',' + c + ')" style="width:' + cellSize + 'px;height:' + cellSize + 'px">' + inner + '</div>';
 	}
@@ -423,20 +466,26 @@ const fillCls = {en: 'en-fill', zh: 'zh-fill', math: 'math-fill', go: 'go-fill'}
 
 	const goTip = currentModule === 'go' ? '<div class="go-tip">👆 点击棋盘上带圈的位置答题（也可以点下面的圈号）</div>' : '';
 	// 生命值显示（Kidjent 式 3 条命）
-	const livesHtml = '<div class="lives">' + [0, 1, 2].map(i => '<span class="' + (i < lives ? '' : 'lost') + '">❤️</span>').join('') + '</div>';
+	const livesHtml = '<div class="lives">' + [0, 1, 2].map(i => '<span class="' + (i < lives ? '' : 'lost') + '">❤️</span>').join('') + (combo >= 2 ? '<span class="combo">🔥 连对 ' + combo + ' 题</span>' : '') + '</div>';
+	// 💡 提示（katrain 提示系统简化：默认隐藏，点击显示）
+	const hintBtn = '<button class="hint-btn" onclick="revealHint()">💡 提示</button>';
+	const hintBox = '<div class="hint-reveal hidden" id="hintBox">' + q.hint + '</div>';
+	const themeBtn = currentModule === 'go' ? '<button class="theme-btn" id="themeBtn" onclick="toggleBoardTheme()">' + (boardTheme() === 'dark' ? '🎨 浅色棋盘' : '🎨 深色棋盘') + '</button>' : '';
 
 	content.innerHTML = `
 	<div class="fade-in">
 	<div class="progress-bar"><div class="progress-fill ${fillCls[currentModule]}" style="width:${(currentQ + 1) / 10 * 100}%"></div></div>
 	${livesHtml}
 	<div class="question-card">
-	<div class="q-number">第 ${currentQ + 1} / 10 题</div>
+	<div class="q-number">第 ${currentQ + 1} / ${questions.length} 题</div>
 	<div class="q-prompt">${q.question}</div>
-	<div class="hint">${q.hint}</div>
+	${hintBtn}
+	${hintBox}
 	${speakBtn}
 	${extra}
 	</div>
 	${goTip}
+	${themeBtn}
 	<div class="options">
 	${optionHtml}
 	</div>
@@ -445,6 +494,47 @@ const fillCls = {en: 'en-fill', zh: 'zh-fill', math: 'math-fill', go: 'go-fill'}
 	</div>
 	`;
 	answered = false;
+}
+
+function revealHint() {
+	const box = document.getElementById('hintBox');
+	if (box) box.classList.remove('hidden');
+}
+
+// ===== 围棋专项训练（katrain 风格：按主题分组）=====
+let goTopic = 'all'; // all/手筋/死活/对杀/布局
+const GO_TOPICS = [
+	{ id: 'all', ico: '♟️', name: '综合练习', desc: '全部 31 道题混合出' },
+	{ id: '手筋', ico: '🪄', name: '基础手筋', desc: '打吃 · 双吃 · 提子 · 征子 · 倒扑 · 接不归' },
+	{ id: '死活', ico: '🏠', name: '死活训练', desc: '做眼 · 杀棋 · 活棋 · 点眼' },
+	{ id: '对杀', ico: '⚔️', name: '对杀训练', desc: '紧气 · 长气 · 数气' },
+	{ id: '布局', ico: '🗺️', name: '布局训练', desc: '占角 · 守角 · 挂角 · 拆边' },
+];
+const GO_THEME_MAP = {
+	'提子': '手筋', '打吃': '手筋', '双吃': '手筋', '征子': '手筋', '扑': '手筋',
+	'挖': '手筋', '枷': '手筋', '接不归': '手筋', '倒扑': '手筋', '胀死牛': '手筋', '劫材': '手筋',
+	'做眼': '死活', '虎': '死活', '杀棋': '死活', '金鸡独立': '死活', '接': '死活',
+	'对杀': '对杀', '布局': '布局'
+};
+function showGoTopicPicker() {
+	const content = document.getElementById('content');
+	let html = '<div class="go-topic-picker fade-in"><div class="q-number" style="margin-bottom:10px">选择练习主题</div>';
+	GO_TOPICS.forEach(t => {
+	const n = t.id === 'all' ? goData.puzzles.length : goData.puzzles.filter(p => GO_THEME_MAP[p.theme] === t.id).length;
+	html += '<div class="tp-card" onclick="startGoTopic(\'' + t.id + '\')">' +
+	'<div class="tp-ico">' + t.ico + '</div>' +
+	'<div><h3>' + t.name + '</h3><p>' + t.desc + '（' + n + ' 题）</p></div></div>';
+	});
+	html += '</div>';
+	content.innerHTML = html;
+}
+function startGoTopic(topic) {
+	goTopic = topic;
+	currentQ = 0;
+	score = 0;
+	lives = 3;
+	questions = generateQuestions('go');
+	showQuestion();
 }
 
 function checkAnswer(idx) {
@@ -457,6 +547,7 @@ function checkAnswer(idx) {
 	if (isCorrect) {
 	opt.classList.add('correct');
 	score++;
+	combo++;
 	playTone(true);
 	clearWrong(q);
 	// 答对：从错题本消掉一次（zh/en 顺便朗读）
@@ -464,6 +555,7 @@ function checkAnswer(idx) {
 	if (currentModule === 'en' && q.en) speak(q.en, 'en-US');
 	} else {
 	opt.classList.add('wrong');
+	combo = 0;
 	playTone(false);
 	addWrong(q);
 	lives--;
@@ -508,7 +600,7 @@ function checkAnswer(idx) {
 function nextQuestion() {
 	clearTimeout(autoTimer);
 	currentQ++;
-	if (currentQ >= 10 || lives <= 0) {
+	if (currentQ >= questions.length || lives <= 0) {
 	showResults(lives <= 0);
 	return;
 	}
@@ -540,11 +632,13 @@ return html;
 
 function showResults(early) {
 const content = document.getElementById('content');
-const emoji = early ? '💔' : score >= 9 ? '🏆' : score >= 7 ? '⭐' : score >= 5 ? '👍' : '💪';
-const msg = early ? '生命耗尽！下次小心点' : score >= 9 ? '太棒了！完美！' : score >= 7 ? '不错！继续加油！' : score >= 5 ? '还可以，再练练！' : '没关系，明天继续！';
+const total = questions.length || 10;
+const pct = total ? score / total : 0;
+const emoji = early ? '💔' : pct >= 0.9 ? '🏆' : pct >= 0.7 ? '⭐' : pct >= 0.5 ? '👍' : '💪';
+const msg = early ? '生命耗尽！下次小心点' : pct >= 0.9 ? '太棒了！完美！' : pct >= 0.7 ? '不错！继续加油！' : pct >= 0.5 ? '还可以，再练练！' : '没关系，明天继续！';
 
-// 星级：≥9 三星，≥7 两星，≥5 一星
-const stars = score >= 9 ? 3 : score >= 7 ? 2 : score >= 5 ? 1 : 0;
+// 星级：≥90% 三星，≥70% 两星，≥50% 一星
+const stars = pct >= 0.9 ? 3 : pct >= 0.7 ? 2 : pct >= 0.5 ? 1 : 0;
 const starHtml = '★'.repeat(stars) + '☆'.repeat(3 - stars);
 
 // 记录成绩 + 连续打卡
@@ -572,7 +666,7 @@ content.innerHTML = `
 <div class="score-card">
 <div class="score-emoji">${emoji}</div>
 <div class="score-stars">${starHtml}</div>
-<div class="score-text">${score} / 10</div>
+<div class="score-text">${score} / ${total}</div>
 <div class="score-msg">${msg}</div>
 <div class="score-sub">🔥 已连续打卡 ${progress.streak || 0} 天</div>
 ${livesLeft}
@@ -589,9 +683,15 @@ function switchModule(module) {
 	currentQ = 0;
 	score = 0;
 	lives = 3;
+	combo = 0;
 	clearTimeout(autoTimer);
 	document.querySelectorAll('.nav button').forEach(b => b.classList.remove('active'));
 	document.querySelector(`.nav .${module}-btn`).classList.add('active');
+	if (module === 'go') {
+	// 围棋专项训练：先选主题（katrain 风格）
+	showGoTopicPicker();
+	return;
+	}
 	questions = generateQuestions(module);
 	showQuestion();
 }
