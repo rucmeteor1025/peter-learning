@@ -1,0 +1,573 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>🎮 Peter 小游戏</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'PingFang SC','Noto Sans SC',sans-serif;background:linear-gradient(180deg,#eef4ff 0%,#fdf2f8 50%,#f0fdf4 100%);color:#333;min-height:100vh;-webkit-tap-highlight-color:transparent}
+.header{background:linear-gradient(135deg,#4FC3F7 0%,#29B6F6 45%,#4DD0E1 100%);color:#fff;padding:22px 20px 26px;text-align:center;position:sticky;top:0;z-index:10;border-radius:0 0 32px 32px;box-shadow:0 6px 24px rgba(41,182,246,.3)}
+.header h1{font-size:25px;margin-bottom:4px;text-shadow:0 2px 6px rgba(0,0,0,.12)}
+.header .sub{font-size:13px;opacity:.9}
+.wrap{max-width:520px;margin:18px auto;padding:0 16px}
+.back-btn{display:inline-block;margin-bottom:14px;padding:8px 18px;background:#fff;color:#29B6F6;border-radius:20px;font-size:14px;font-weight:700;cursor:pointer;box-shadow:0 2px 8px rgba(0,0,0,.08);text-decoration:none}
+.back-btn:active{transform:scale(.95)}
+.sec-title{font-size:14px;color:#999;margin:6px 4px 12px;font-weight:700;letter-spacing:1px}
+/* ===== 游戏大厅卡片 ===== */
+.game-card{background:#fff;border-radius:20px;box-shadow:0 6px 20px rgba(30,50,100,.08);padding:18px;margin-bottom:14px;display:flex;align-items:center;gap:16px;cursor:pointer;transition:all .2s;border:2px solid transparent}
+.game-card:active{transform:scale(.97);border-color:#29B6F6}
+.game-card .g-ico{font-size:36px;width:60px;height:60px;display:flex;align-items:center;justify-content:center;border-radius:18px;flex-shrink:0}
+.g-ico.mine{background:#FFF3E0}.g-ico.memo{background:#E8F5E9}.g-ico.t2048{background:#E3F2FD}.g-ico.slide{background:#F3E5F5}
+.game-card h3{font-size:17px;font-weight:800}
+.game-card p{font-size:12.5px;color:#888;margin-top:3px}
+.game-card .arrow{margin-left:auto;font-size:20px;color:#ccc}
+/* ===== 通用游戏框架 ===== */
+.gm-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;gap:8px}
+.gm-btn{padding:9px 16px;background:#fff;color:#29B6F6;border:2px solid #B3E5FC;border-radius:18px;font-size:13.5px;font-weight:700;cursor:pointer}
+.gm-btn:active{transform:scale(.95)}
+.gm-stat{background:#fff;border-radius:14px;padding:7px 14px;font-size:13.5px;font-weight:700;color:#455A64;box-shadow:0 2px 8px rgba(0,0,0,.06)}
+.gm-box{background:#fff;border-radius:22px;padding:20px;box-shadow:0 8px 28px rgba(30,50,100,.10)}
+.gm-overlay{display:none;position:absolute;inset:0;background:rgba(255,255,255,.92);border-radius:22px;flex-direction:column;align-items:center;justify-content:center;z-index:5}
+.gm-overlay.show{display:flex}
+.gm-overlay .big{font-size:60px;animation:popIn .5s cubic-bezier(.34,1.56,.64,1)}
+.gm-overlay .txt{font-size:20px;font-weight:800;color:#263238;margin-top:8px}
+.gm-overlay .sub{font-size:14px;color:#888;margin-top:4px}
+.gm-overlay .again{margin-top:16px;padding:12px 32px;background:linear-gradient(135deg,#29B6F6,#4DD0E1);color:#fff;border:none;border-radius:20px;font-size:15px;font-weight:700;cursor:pointer;box-shadow:0 6px 18px rgba(41,182,246,.35)}
+.gm-box{position:relative}
+/* ===== 扫雷 ===== */
+.mine-toolbar{display:flex;gap:8px;margin-bottom:12px;align-items:center}
+.mine-mode{padding:8px 14px;border-radius:16px;font-size:12.5px;font-weight:700;cursor:pointer;border:2px solid transparent;background:#F1F8E9;color:#558B2F}
+.mine-mode.active{background:#558B2F;color:#fff}
+.mine-board{display:grid;gap:3px;justify-content:center}
+.mine-cell{width:40px;height:40px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:800;cursor:pointer;background:linear-gradient(180deg,#fff,#e8ecf3);box-shadow:0 2px 4px rgba(0,0,0,.12);user-select:none}
+.mine-cell:active{transform:scale(.9)}
+.mine-cell.open{background:#f3f5f9;box-shadow:none;cursor:default}
+.mine-cell.flag{background:#FFF3E0}
+.mine-cell.bomb{background:linear-gradient(135deg,#F44336,#EF5350);color:#fff;animation:shake .4s}
+.mine-cell.dim{opacity:.35}
+.mine-cell.n1{color:#1976D2}.mine-cell.n2{color:#2E7D32}.mine-cell.n3{color:#E53935}.mine-cell.n4{color:#7B1FA2}.mine-cell.n5{color:#C62828}
+/* ===== 记忆翻牌 ===== */
+.memo-board{display:grid;gap:10px;justify-content:center}
+.memo-card{aspect-ratio:1;border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:30px;cursor:pointer;background:linear-gradient(135deg,#29B6F6,#4DD0E1);color:#fff;font-weight:800;box-shadow:0 3px 10px rgba(41,182,246,.25);transition:transform .25s;user-select:none}
+.memo-card.back{transform:rotateY(180deg)}
+.memo-card.matched{background:linear-gradient(135deg,#66BB6A,#81C784);animation:bounce .4s}
+/* ===== 2048 ===== */
+.t2048-board{display:grid;gap:8px;background:#bbada0;border-radius:14px;padding:10px;justify-content:center}
+.t2048-cell{width:64px;height:64px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:24px;font-weight:800;background:#cdc1b4;color:#776e65;transition:all .15s}
+.t2048-cell.v2{background:#eee4da;color:#776e65}.t2048-cell.v4{background:#ede0c8;color:#776e65}
+.t2048-cell.v8{background:#f2b179;color:#fff}.t2048-cell.v16{background:#f59563;color:#fff}
+.t2048-cell.v32{background:#f67c5f;color:#fff}.t2048-cell.v64{background:#f65e3b;color:#fff}
+.t2048-cell.v128{background:#edcf72;color:#fff}.t2048-cell.v256{background:#edcc61;color:#fff}
+.t2048-cell.v512{background:#edc850;color:#fff}.t2048-cell.v1024{background:#edc53f;color:#fff}
+.t2048-cell.v2048{background:#edc22e;color:#fff;animation:popIn .4s}
+.t2048-dir{display:flex;justify-content:center;gap:8px;margin-top:14px}
+.t2048-dir button{width:56px;height:56px;border-radius:16px;background:#fff;border:2px solid #E0E0E0;font-size:22px;cursor:pointer;box-shadow:0 3px 8px rgba(0,0,0,.08)}
+.t2048-dir button:active{transform:scale(.9)}
+/* ===== 华容道 ===== */
+.slide-board{display:grid;gap:6px;justify-content:center;background:#F3E5F5;border-radius:14px;padding:10px}
+.slide-cell{width:76px;height:76px;border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:26px;font-weight:800;background:linear-gradient(135deg,#AB47BC,#CE93D8);color:#fff;cursor:pointer;box-shadow:0 3px 10px rgba(171,71,188,.3);transition:transform .15s}
+.slide-cell.empty{background:transparent;box-shadow:none;cursor:default}
+.slide-cell:active{transform:scale(.92)}
+/* ===== 动画 ===== */
+@keyframes popIn{0%{transform:scale(0);opacity:0}70%{transform:scale(1.15)}100%{transform:scale(1);opacity:1}}
+@keyframes shake{0%,100%{transform:translateX(0)}20%{transform:translateX(-6px)}40%{transform:translateX(6px)}60%{transform:translateX(-4px)}80%{transform:translateX(4px)}}
+@keyframes bounce{0%{transform:scale(1)}30%{transform:scale(1.15)}60%{transform:scale(.95)}100%{transform:scale(1)}}
+@keyframes fadeIn{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:translateY(0)}}
+.fade-in{animation:fadeIn .35s cubic-bezier(.4,0,.2,1)}
+</style>
+</head>
+<body>
+<div class="header">
+<h1>🎮 Peter 小游戏</h1>
+<div class="sub" id="subLine">经典益智 · 每天动动脑</div>
+</div>
+<div class="wrap" id="app">
+
+<!-- 游戏大厅 -->
+<div id="lobby">
+<a class="back-btn" href="index.html">← 返回学习空间</a>
+<div class="sec-title">🕹️ 选择游戏</div>
+<div class="game-card" onclick="openGame('mine')">
+<div class="g-ico mine">💣</div>
+<div><h3>扫雷</h3><p>点开安全格，小心地雷！简单 8×8 · 中等 10×10</p></div>
+<div class="arrow">›</div>
+</div>
+<div class="game-card" onclick="openGame('memo')">
+<div class="g-ico memo">🧠</div>
+<div><h3>记忆翻牌</h3><p>翻开两张，找到一样的动物</p></div>
+<div class="arrow">›</div>
+</div>
+<div class="game-card" onclick="openGame('t2048')">
+<div class="g-ico t2048">🔢</div>
+<div><h3>2048</h3><p>滑动合并数字，冲到 2048</p></div>
+<div class="arrow">›</div>
+</div>
+<div class="game-card" onclick="openGame('slide')">
+<div class="g-ico slide">🧩</div>
+<div><h3>数字华容道</h3><p>把数字按 1-8 顺序排好</p></div>
+<div class="arrow">›</div>
+</div>
+</div>
+
+<!-- 游戏区域 -->
+<div id="gameArea" style="display:none"></div>
+
+</div>
+<script>
+// ================= 游戏切换 =================
+function openGame(game) {
+	document.getElementById('lobby').style.display = 'none';
+	const area = document.getElementById('gameArea');
+	area.style.display = 'block';
+	if (game === 'mine') { renderMine(); }
+	else if (game === 'memo') { renderMemo(); }
+	else if (game === 't2048') { render2048(); }
+	else if (game === 'slide') { renderSlide(); }
+}
+function backToLobby() {
+	document.getElementById('gameArea').style.display = 'none';
+	document.getElementById('lobby').style.display = 'block';
+	document.getElementById('subLine').textContent = '经典益智 · 每天动动脑';
+}
+
+// ================= 扫雷（儿童版） =================
+let mineState = null;
+function renderMine() {
+	const area = document.getElementById('gameArea');
+	area.innerHTML = '<a class="back-btn" onclick="backToLobby()">← 返回游戏</a>' +
+	'<div class="sec-title">💣 扫雷</div>' +
+	'<div class="gm-box fade-in"><div class="mine-toolbar">' +
+	'<button class="mine-mode" onclick="mineMode(\'easy\')">简单</button>' +
+	'<button class="mine-mode" onclick="mineMode(\'mid\')">中等</button>' +
+	'<button class="mine-mode" onclick="mineMode(\'hard\')">困难</button>' +
+	'<button class="mine-mode active" id="mineFlagMode" onclick="mineToggleFlag()">🚩 旗子模式</button>' +
+	'<button class="gm-btn" onclick="mineNew()">🔄 重开</button>' +
+	'</div>' +
+	'<div class="gm-stat" id="mineStat">💣 剩余 0 · ⏱ 0s</div>' +
+	'<div class="mine-board" id="mineBoard"></div>' +
+	'<div class="gm-overlay" id="mineOverlay"><div class="big">🎉</div><div class="txt">全部安全！</div><div class="sub" id="mineOverlaySub"></div><button class="again" onclick="mineNew()">再玩一次</button></div>' +
+	'</div>';
+	mineConfig = { w: 8, h: 8, mines: 10 };
+	mineFlagModeOn = false;
+	mineNew();
+}
+let mineConfig = { w: 8, h: 8, mines: 10 };
+let mineFlagModeOn = false;
+function mineMode(level) {
+	mineConfig = level === 'easy' ? { w: 8, h: 8, mines: 10 } :
+	level === 'mid' ? { w: 10, h: 10, mines: 15 } : { w: 12, h: 12, mines: 24 };
+	document.querySelectorAll('.mine-mode').forEach((b, i) => b.classList.toggle('active', i === 3 || (['easy','mid','hard'].indexOf(level) === i)));
+	mineNew();
+}
+function mineToggleFlag() {
+	mineFlagModeOn = !mineFlagModeOn;
+	document.getElementById('mineFlagMode').classList.toggle('active', mineFlagModeOn);
+}
+function mineNew() {
+	const { w, h, mines } = mineConfig;
+	mineState = { w, h, mines, board: [], open: [], flags: [], started: false, safe: w * h - mines, over: false, time: 0 };
+	for (let i = 0; i < h; i++) { mineState.board.push(new Array(w).fill(0)); mineState.open.push(new Array(w).fill(false)); mineState.flags.push(new Array(w).fill(false)); }
+	document.getElementById('mineOverlay').classList.remove('show');
+	mineRender();
+	if (mineTimer) clearInterval(mineTimer);
+	mineTimer = null;
+}
+let mineTimer = null;
+function minePlaceMines(safeR, safeC) {
+	// 避开首次点击点及其周围
+	const { w, h, mines } = mineState;
+	let placed = 0;
+	while (placed < mines) {
+	const r = Math.floor(Math.random() * h);
+	const c = Math.floor(Math.random() * w);
+	if (Math.abs(r - safeR) <= 1 && Math.abs(c - safeC) <= 1) continue;
+	if (mineState.board[r][c] === 9) continue;
+	mineState.board[r][c] = 9;
+	placed++;
+	}
+	// 计算数字
+	for (let r = 0; r < h; r++) {
+	for (let c = 0; c < w; c++) {
+	if (mineState.board[r][c] === 9) continue;
+	let n = 0;
+	for (let dr = -1; dr <= 1; dr++) for (let dc = -1; dc <= 1; dc++) {
+	const nr = r + dr, nc = c + dc;
+	if (nr >= 0 && nr < h && nc >= 0 && nc < w && mineState.board[nr][nc] === 9) n++;
+	}
+	mineState.board[r][c] = n;
+	}
+	}
+}
+function mineReveal(r, c) {
+	// 洪水展开：0 区域连开
+	const stack = [[r, c]];
+	while (stack.length) {
+	const [cr, cc] = stack.pop();
+	if (cr < 0 || cr >= mineState.h || cc < 0 || cc >= mineState.w) continue;
+	if (mineState.open[cr][cc] || mineState.flags[cr][cc]) continue;
+	mineState.open[cr][cc] = true;
+	mineState.safe--;
+	if (mineState.board[cr][cc] === 0) {
+	for (let dr = -1; dr <= 1; dr++) for (let dc = -1; dc <= 1; dc++) stack.push([cr + dr, cc + dc]);
+	}
+	}
+}
+function mineCellClick(r, c) {
+	if (mineState.over) return;
+	if (mineFlagModeOn) {
+	mineState.flags[r][c] = !mineState.flags[r][c];
+	mineRender();
+	return;
+	}
+	if (mineState.flags[r][c] || mineState.open[r][c]) return;
+	if (!mineState.started) {
+	mineState.started = true;
+	minePlaceMines(r, c);
+	mineTimer = setInterval(() => { mineState.time++; mineRenderStat(); }, 1000);
+	}
+	if (mineState.board[r][c] === 9) {
+	// 踩雷
+	mineState.over = true;
+	if (mineTimer) clearInterval(mineTimer);
+	mineState.open[r][c] = true;
+	mineShowAll(true);
+	const ov = document.getElementById('mineOverlay');
+	ov.querySelector('.big').textContent = '💥';
+	ov.querySelector('.txt').textContent = '踩到地雷啦！';
+	ov.querySelector('.sub').textContent = '别灰心，再试一次！';
+	ov.classList.add('show');
+	return;
+	}
+	mineReveal(r, c);
+	if (mineState.safe <= 0) {
+	mineState.over = true;
+	if (mineTimer) clearInterval(mineTimer);
+	mineShowAll(false);
+	const ov = document.getElementById('mineOverlay');
+	ov.querySelector('.big').textContent = '🎉';
+	ov.querySelector('.txt').textContent = '全部安全！';
+	ov.querySelector('.sub').textContent = '用时 ' + mineState.time + ' 秒';
+	ov.classList.add('show');
+	}
+	mineRender();
+}
+function mineShowAll(lost) {
+	for (let r = 0; r < mineState.h; r++) for (let c = 0; c < mineState.w; c++) {
+	if (mineState.board[r][c] === 9 && !(lost && r === mineState.lastR && c === mineState.lastC)) mineState.open[r][c] = true;
+	}
+	mineRender();
+}
+function mineRender() {
+	const { w, h } = mineState;
+	const board = document.getElementById('mineBoard');
+	board.style.gridTemplateColumns = 'repeat(' + w + ',40px)';
+	let html = '';
+	for (let r = 0; r < h; r++) {
+	for (let c = 0; c < w; c++) {
+	let cls = 'mine-cell';
+	let content = '';
+	if (mineState.flags[r][c]) { cls += ' flag'; content = '🚩'; }
+	else if (mineState.open[r][c]) {
+	if (mineState.board[r][c] === 9) { cls += ' bomb'; content = '💣'; }
+	else {
+	cls += ' open';
+	const n = mineState.board[r][c];
+	if (n > 0) { cls += ' n' + n; content = n; }
+	}
+	} else if (mineState.over && mineState.board[r][c] === 9) { cls += ' bomb dim'; content = '💣'; }
+	html += '<div class="' + cls + '" onclick="mineCellClick(' + r + ',' + c + ')">' + content + '</div>';
+	}
+	}
+	board.innerHTML = html;
+	mineRenderStat();
+}
+function mineRenderStat() {
+	const el = document.getElementById('mineStat');
+	if (!el) return;
+	let flagged = 0;
+	for (let r = 0; r < mineState.h; r++) for (let c = 0; c < mineState.w; c++) if (mineState.flags[r][c]) flagged++;
+	el.textContent = '💣 剩余 ' + (mineState.mines - flagged) + ' · ⏱ ' + mineState.time + 's';
+}
+
+// ================= 记忆翻牌 =================
+let memoState = null;
+const MEMO_EMOJI = ['🐶', '🐱', '🐰', '🐻', '🐸', '🐵', '🦊', '🐯', '🦁', '🐮', '🐷', '🐨'];
+function renderMemo() {
+	const area = document.getElementById('gameArea');
+	area.innerHTML = '<a class="back-btn" onclick="backToLobby()">← 返回游戏</a>' +
+	'<div class="sec-title">🧠 记忆翻牌</div>' +
+	'<div class="gm-box fade-in"><div class="gm-head">' +
+	'<button class="gm-btn" onclick="memoNew()">🔄 新一局</button>' +
+	'<div class="gm-stat" id="memoStat">👣 0 步</div>' +
+	'</div><div class="memo-board" id="memoBoard"></div>' +
+	'<div class="gm-overlay" id="memoOverlay"><div class="big">🎉</div><div class="txt">配对成功！</div><div class="sub" id="memoOverlaySub"></div><button class="again" onclick="memoNew()">再来一局</button></div></div>';
+	memoNew();
+}
+function memoNew() {
+	const pairs = 8;
+	const emojis = shuffle([...MEMO_EMOJI]).slice(0, pairs);
+	const cards = shuffle([...emojis, ...emojis]);
+	memoState = { cards, flipped: [], matched: new Set(), steps: 0, lock: false, pairs };
+	const board = document.getElementById('memoBoard');
+	board.style.gridTemplateColumns = 'repeat(4,76px)';
+	let html = '';
+	cards.forEach((e, i) => {
+	html += '<div class="memo-card" id="mc-' + i + '" onclick="memoFlip(' + i + ')"></div>';
+	});
+	board.innerHTML = html;
+	document.getElementById('memoOverlay').classList.remove('show');
+	memoRender();
+}
+function memoFlip(i) {
+	if (memoState.lock || memoState.matched.has(i) || memoState.flipped.includes(i)) return;
+	if (memoState.flipped.length >= 2) return;
+	memoState.flipped.push(i);
+	memoRender();
+	if (memoState.flipped.length === 2) {
+	memoState.steps++;
+	document.getElementById('memoStat').textContent = '👣 ' + memoState.steps + ' 步';
+	const [a, b] = memoState.flipped;
+	if (memoState.cards[a] === memoState.cards[b]) {
+	memoState.matched.add(a);
+	memoState.matched.add(b);
+	document.getElementById('mc-' + a).classList.add('matched');
+	document.getElementById('mc-' + b).classList.add('matched');
+	memoState.flipped = [];
+	if (memoState.matched.size === memoState.cards.length) {
+	const ov = document.getElementById('memoOverlay');
+	const msg = memoState.steps <= 12 ? '记忆力超棒！' : memoState.steps <= 16 ? '很不错！' : '继续加油！';
+	ov.querySelector('.big').textContent = '🏆';
+	ov.querySelector('.txt').textContent = msg;
+	ov.querySelector('.sub').textContent = '用了 ' + memoState.steps + ' 步完成';
+	ov.classList.add('show');
+	}
+	} else {
+	memoState.lock = true;
+	setTimeout(() => {
+	document.getElementById('mc-' + a).classList.remove('back');
+	document.getElementById('mc-' + b).classList.remove('back');
+	memoState.flipped = [];
+	memoState.lock = false;
+	}, 750);
+	}
+	}
+}
+function memoRender() {
+	memoState.cards.forEach((e, i) => {
+	const el = document.getElementById('mc-' + i);
+	if (!el) return;
+	if (memoState.matched.has(i)) {
+	el.textContent = e;
+	el.classList.add('matched');
+	} else if (memoState.flipped.includes(i)) {
+	el.textContent = e;
+	el.classList.add('back');
+	} else {
+	el.textContent = '?';
+	el.classList.remove('back');
+	}
+	});
+}
+
+// ================= 2048 =================
+function shuffle(arr) {
+	for (let i = arr.length - 1; i > 0; i--) {
+	const j = Math.floor(Math.random() * (i + 1));
+	[arr[i], arr[j]] = [arr[j], arr[i]];
+	}
+	return arr;
+}
+let t2048State = null;
+let t2048Best = 0;
+try { t2048Best = parseInt(localStorage.getItem('peter_2048_best') || '0') || 0; } catch(e) {}
+function render2048() {
+	const area = document.getElementById('gameArea');
+	area.innerHTML = '<a class="back-btn" onclick="backToLobby()">← 返回游戏</a>' +
+	'<div class="sec-title">🔢 2048</div>' +
+	'<div class="gm-box fade-in" id="t2048Box"><div class="gm-head">' +
+	'<button class="gm-btn" onclick="t2048New()">🔄 新一局</button>' +
+	'<div class="gm-stat">🏆 <span id="t2048Score">0</span> · 最高 <span id="t2048Best">' + t2048Best + '</span></div>' +
+	'</div><div class="t2048-board" id="t2048Board"></div>' +
+	'<div class="t2048-dir"><button onclick="t2048Move(0)">⬆️</button><button onclick="t2048Move(1)">⬇️</button><button onclick="t2048Move(2)">⬅️</button><button onclick="t2048Move(3)">➡️</button></div>' +
+	'<div class="gm-overlay" id="t2048Overlay"><div class="big">🎉</div><div class="txt">2048 达成！</div><div class="sub">得分 <span id="t2048FinalScore"></span></div><button class="again" onclick="t2048New()">再来一局</button></div></div>';
+	t2048New();
+	// 键盘控制
+	document.onkeydown = function(e) {
+	if (document.getElementById('gameArea').style.display !== 'block') return;
+	if (!document.getElementById('t2048Board')) return;
+	const map = { ArrowUp: 0, ArrowDown: 1, ArrowLeft: 2, ArrowRight: 3 };
+	if (map[e.key] !== undefined) { e.preventDefault(); t2048Move(map[e.key]); }
+	};
+	// 触摸滑动
+	let tx = null, ty = null;
+	document.getElementById('t2048Box').addEventListener('touchstart', e => { tx = e.touches[0].clientX; ty = e.touches[0].clientY; }, {passive: true});
+	document.getElementById('t2048Box').addEventListener('touchend', e => {
+	if (tx === null) return;
+	const dx = e.changedTouches[0].clientX - tx;
+	const dy = e.changedTouches[0].clientY - ty;
+	tx = null; ty = null;
+	if (Math.abs(dx) < 24 && Math.abs(dy) < 24) return;
+	if (Math.abs(dx) > Math.abs(dy)) t2048Move(dx > 0 ? 3 : 2);
+	else t2048Move(dy > 0 ? 1 : 0);
+	}, {passive: true});
+}
+function t2048New() {
+	t2048State = { grid: [], score: 0 };
+	for (let i = 0; i < 4; i++) t2048State.grid.push([0, 0, 0, 0]);
+	t2048AddTile();
+	t2048AddTile();
+	t2048Render();
+	document.getElementById('t2048Overlay').classList.remove('show');
+}
+function t2048AddTile() {
+	const empties = [];
+	for (let r = 0; r < 4; r++) for (let c = 0; c < 4; c++) if (t2048State.grid[r][c] === 0) empties.push([r, c]);
+	if (!empties.length) return;
+	const [r, c] = empties[Math.floor(Math.random() * empties.length)];
+	t2048State.grid[r][c] = Math.random() < 0.9 ? 2 : 4;
+}
+function t2048SlideRow(row) {
+	// 压缩 + 合并（返回新行和得分）
+	const cells = row.filter(v => v !== 0);
+	const out = [];
+	let score = 0;
+	for (let i = 0; i < cells.length; i++) {
+	if (i + 1 < cells.length && cells[i] === cells[i + 1]) {
+	out.push(cells[i] * 2);
+	score += cells[i] * 2;
+	i++;
+	} else {
+	out.push(cells[i]);
+	}
+	}
+	while (out.length < 4) out.push(0);
+	return { out, score };
+}
+function t2048Move(dir) {
+	if (!t2048State || t2048State.over) return;
+	let moved = false;
+	let gained = 0;
+	const rotate = (g) => { // 顺时针旋转
+	const n = g.map((row, r) => row.map((_, c) => g[3 - c][r]));
+	return n;
+	};
+	// 统一转成"向左"处理
+	let g = t2048State.grid;
+	if (dir === 1) g = rotate(rotate(g));       // 下 → 旋转180
+	else if (dir === 3) g = rotate(g);           // 右 → 旋转90
+	else if (dir === 0) g = rotate(rotate(rotate(g))); // 上 → 旋转270
+	for (let r = 0; r < 4; r++) {
+	const { out, score } = t2048SlideRow(g[r]);
+	gained += score;
+	if (out.join(',') !== g[r].join(',')) moved = true;
+	g[r] = out;
+	}
+	// 转回原方向
+	if (dir === 1) g = rotate(rotate(g));
+	else if (dir === 3) g = rotate(rotate(rotate(g)));
+	else if (dir === 0) g = rotate(g);
+	if (!moved) return;
+	t2048State.grid = g;
+	t2048State.score += gained;
+	t2048AddTile();
+	t2048Render();
+	// 结束检查
+	if (t2048NoMoves()) {
+	t2048State.over = true;
+	const ov = document.getElementById('t2048Overlay');
+	ov.querySelector('.big').textContent = '😅';
+	ov.querySelector('.txt').textContent = '没有空位啦';
+	ov.querySelector('.sub').textContent = '得分 ' + t2048State.score;
+	document.getElementById('t2048FinalScore').textContent = t2048State.score;
+	ov.classList.add('show');
+	}
+}
+function t2048NoMoves() {
+	for (let r = 0; r < 4; r++) for (let c = 0; c < 4; c++) {
+	if (t2048State.grid[r][c] === 0) return false;
+	if (c < 3 && t2048State.grid[r][c] === t2048State.grid[r][c + 1]) return false;
+	if (r < 3 && t2048State.grid[r][c] === t2048State.grid[r + 1][c]) return false;
+	}
+	return true;
+}
+function t2048Render() {
+	const board = document.getElementById('t2048Board');
+	if (!board) return;
+	board.style.gridTemplateColumns = 'repeat(4,64px)';
+	let html = '';
+	for (let r = 0; r < 4; r++) for (let c = 0; c < 4; c++) {
+	const v = t2048State.grid[r][c];
+	html += '<div class="t2048-cell' + (v ? ' v' + v : '') + '">' + (v || '') + '</div>';
+	}
+	board.innerHTML = html;
+	document.getElementById('t2048Score').textContent = t2048State.score;
+	if (t2048State.score > t2048Best) {
+	t2048Best = t2048State.score;
+	try { localStorage.setItem('peter_2048_best', String(t2048Best)); } catch(e) {}
+	document.getElementById('t2048Best').textContent = t2048Best;
+	}
+}
+
+// ================= 数字华容道（3×3） =================
+let slideState = null;
+function renderSlide() {
+	const area = document.getElementById('gameArea');
+	area.innerHTML = '<a class="back-btn" onclick="backToLobby()">← 返回游戏</a>' +
+	'<div class="sec-title">🧩 数字华容道</div>' +
+	'<div class="gm-box fade-in"><div class="gm-head">' +
+	'<button class="gm-btn" onclick="slideNew()">🔄 洗牌</button>' +
+	'<div class="gm-stat">👣 <span id="slideSteps">0</span> 步</div>' +
+	'</div><div class="slide-board" id="slideBoard"></div>' +
+	'<div class="gm-overlay" id="slideOverlay"><div class="big">🎉</div><div class="txt">拼好啦！</div><div class="sub" id="slideOverlaySub"></div><button class="again" onclick="slideNew()">再来一局</button></div></div>';
+	slideNew();
+}
+function slideNew() {
+	// 生成可解局面：从完成态随机移动打乱
+	const grid = [[1, 2, 3], [4, 5, 6], [7, 8, 0]];
+	let er = 2, ec = 2;
+	for (let i = 0; i < 200; i++) {
+	const dirs = [[-1, 0], [1, 0], [0, -1], [0, 1]];
+	const dir = dirs[Math.floor(Math.random() * 4)];
+	const nr = er + dir[0], nc = ec + dir[1];
+	if (nr >= 0 && nr < 3 && nc >= 0 && nc < 3) {
+	[grid[er][ec], grid[nr][nc]] = [grid[nr][nc], grid[er][ec]];
+	er = nr; ec = nc;
+	}
+	}
+	slideState = { grid, er, ec, steps: 0 };
+	slideRender();
+	document.getElementById('slideOverlay').classList.remove('show');
+}
+function slideClick(r, c) {
+	const { er, ec } = slideState;
+	if ((Math.abs(r - er) + Math.abs(c - ec)) !== 1) return;
+	[slideState.grid[er][ec], slideState.grid[r][c]] = [slideState.grid[r][c], slideState.grid[er][ec]];
+	slideState.er = r;
+	slideState.ec = c;
+	slideState.steps++;
+	document.getElementById('slideSteps').textContent = slideState.steps;
+	slideRender();
+	// 完成检查
+	const flat = slideState.grid.flat();
+	if (flat.join(',') === '1,2,3,4,5,6,7,8,0') {
+	const ov = document.getElementById('slideOverlay');
+	ov.querySelector('.big').textContent = '🎉';
+	ov.querySelector('.txt').textContent = '拼好啦！';
+	ov.querySelector('.sub').textContent = '用了 ' + slideState.steps + ' 步';
+	ov.classList.add('show');
+	}
+}
+function slideRender() {
+	const board = document.getElementById('slideBoard');
+	board.style.gridTemplateColumns = 'repeat(3,76px)';
+	let html = '';
+	for (let r = 0; r < 3; r++) for (let c = 0; c < 3; c++) {
+	const v = slideState.grid[r][c];
+	html += '<div class="slide-cell' + (v === 0 ? ' empty' : '') + '" onclick="slideClick(' + r + ',' + c + ')">' + (v || '') + '</div>';
+	}
+	board.innerHTML = html;
+}
+</script>
+</body>
+</html>
