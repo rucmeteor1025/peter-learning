@@ -90,6 +90,9 @@ body{font-family:'PingFang SC','Noto Sans SC',sans-serif;background:#f5f7fa;colo
 .go-topic-picker .tp-ico{font-size:30px;width:52px;height:52px;display:flex;align-items:center;justify-content:center;border-radius:13px;background:#F3E5F5;flex-shrink:0}
 .go-topic-picker h3{font-size:16px;font-weight:700}
 .go-topic-picker p{font-size:12px;color:#888;margin-top:2px}
+.reading-box{background:#FFF8E1;border:1px solid #FFE0B2;border-radius:12px;padding:0;margin:8px 0;text-align:left;overflow:hidden}
+.rb-head{font-size:13px;font-weight:700;color:#B26A00;padding:10px 14px;cursor:pointer;display:flex;justify-content:space-between;align-items:center;background:rgba(255,224,178,.3)}
+.rb-body{font-size:14.5px;line-height:1.9;color:#5D4E37;padding:12px 14px;max-height:220px;overflow-y:auto}
 .hint{font-size:13px;color:#888;margin-top:4px}
 .hidden{display:none}
 .fade-in{animation:fadeIn 0.3s ease}
@@ -177,7 +180,11 @@ function loadWrong() { try { return JSON.parse(localStorage.getItem('peter_wrong
 function saveWrong(w) { try { localStorage.setItem('peter_wrong', JSON.stringify(w)); } catch(e) {} }
 function wrongKey(q) {
 if (currentModule === 'go') return 'go:' + q.id;
-if (currentModule === 'zh') return 'zh:' + q.char;
+if (currentModule === 'zh') {
+if (q.zhSub === 'poems') return 'zp:' + q.poemTitle + ':' + q.question;
+if (q.zhSub === 'read') return 'zr:' + q.readTitle + ':' + q.question;
+return 'zh:' + q.char;
+}
 if (currentModule === 'math') return null; // 随机口算题不重样，不进错题本
 return 'en:' + q.en;
 }
@@ -211,12 +218,39 @@ while (picked.length < 3 && pool.length) picked.push(pool.pop());
 return { first: picked, rest };
 }
 
-let enData = null, zhData = null, goData = null;
+let enData = null, zhData = null, goData = null, poemData = null, readingData = null;
 let currentModule = null, currentQ = 0, score = 0, questions = [];
 let answered = false;
 let lives = 3;          // ❤️ 生命值（Kidjent 式 3 条命）
 let autoTimer = null;   // 自动下一题计时器
 let combo = 0;          // 🔥 连击数（katrain 训练感）
+let zhMode = 'chars';   // 语文子模式：chars识字 / poems诗词 / read阅读
+const ZH_MODES = [
+	{ id: 'chars', ico: '📖', name: '识字练习', desc: '拼音选字 · 400+ 生字' },
+	{ id: 'poems', ico: '📜', name: '诗词背诵', desc: '暑假 9 首必背诗 · 接句/诗意' },
+	{ id: 'read', ico: '📚', name: '短文阅读', desc: '6 篇小故事 · 读完答题' },
+];
+function showZhModePicker() {
+	const content = document.getElementById('content');
+	let html = '<div class="go-topic-picker fade-in"><div class="q-number" style="margin-bottom:10px">选择语文练习</div>';
+	ZH_MODES.forEach(t => {
+	html += '<div class="tp-card" onclick="startZhMode(\'' + t.id + '\')">' +
+	'<div class="tp-ico" style="background:#FFF3E0">' + t.ico + '</div>' +
+	'<div><h3>' + t.name + '</h3><p>' + t.desc + '</p></div></div>';
+	});
+	html += '</div>';
+	content.innerHTML = html;
+}
+function startZhMode(mode) {
+	zhMode = mode;
+	currentQ = 0;
+	score = 0;
+	lives = 3;
+	combo = 0;
+	clearTimeout(autoTimer);
+	questions = generateQuestions('zh');
+	showQuestion();
+}
 
 // ===== 数学口算题（填空式，Kidjent 风格 + 常见错误干扰项）=====
 function genMathQuestion() {
@@ -277,12 +311,14 @@ explanation: full
 
 async function loadData() {
 try {
-	const [e, z, g] = await Promise.all([
+	const [e, z, g, p, r] = await Promise.all([
 	fetch('../data/english.json').then(r => r.json()),
 	fetch('../data/chinese.json').then(r => r.json()),
-	fetch('../data/go.json').then(r => r.json())
+	fetch('../data/go.json').then(r => r.json()),
+	fetch('../data/poems.json').then(r => r.json()),
+	fetch('../data/readings.json').then(r => r.json())
 	]);
-enData = e; zhData = z; goData = g;
+enData = e; zhData = z; goData = g; poemData = p; readingData = r;
 } catch(e) {
 document.getElementById('content').innerHTML = '<div class="question-card" style="text-align:center;padding:40px"><div style="font-size:48px;margin-bottom:16px">⚠️</div><div>加载数据失败，请确保服务器在运行</div></div>';
 }
@@ -314,6 +350,47 @@ function generateQuestions(module) {
 	const selected = shuffle([...first, ...shuffle(rest).slice(0, 10 - first.length)]);
 	return selected;
 	} else if (module === 'zh') {
+	if (zhMode === 'poems') {
+	// 诗词：随机抽 4 首，每首 2 题，接句/诗意/字词
+	const qs = [];
+	const poems = shuffle([...poemData.poems]).slice(0, 4);
+	for (const poem of poems) {
+	for (const q of shuffle([...poem.questions]).slice(0, 2)) {
+	qs.push({ zhSub: 'poems', poemTitle: poem.title, poemAuthor: poem.author,
+	question: q.q, options: shuffle([...q.options]), correct: q.options[q.answer],
+	explanation: q.explain, readText: poem.text, readLabel: '《' + poem.title + '》' + poem.author });
+	}
+	}
+	// 补足 10 题
+	let i = 0;
+	while (qs.length < 10 && i < 5) {
+	const poem = poemData.poems[i % poemData.poems.length];
+	for (const q of poem.questions) {
+	if (qs.length >= 10) break;
+	if (!qs.some(x => x.question === q.q)) {
+	qs.push({ zhSub: 'poems', poemTitle: poem.title, poemAuthor: poem.author,
+	question: q.q, options: shuffle([...q.options]), correct: q.options[q.answer],
+	explanation: q.explain, readText: poem.text, readLabel: '《' + poem.title + '》' + poem.author });
+	}
+	}
+	i++;
+	}
+	return qs.slice(0, 10);
+	}
+	if (zhMode === 'read') {
+	// 阅读：抽 4 篇短文，每篇 2-3 题
+	const qs = [];
+	const readings = shuffle([...readingData.readings]).slice(0, 4);
+	for (const rd of readings) {
+	for (const q of rd.questions) {
+	qs.push({ zhSub: 'read', readTitle: rd.title,
+	question: q.q, options: shuffle([...q.options]), correct: q.options[q.answer],
+	explanation: q.explain, readText: rd.text, readLabel: '📖 ' + rd.title });
+	}
+	}
+	return shuffle(qs).slice(0, 10);
+	}
+	// 识字（默认）
 	const allChars = [];
 	zhData.categories.forEach(c => c.chars.forEach(ch => allChars.push({...ch, cat: c.id})));
 	const base = allChars.map(ch => ({
@@ -437,7 +514,10 @@ const colors = {en: '#1976D2', zh: '#E65100', math: '#2E7D32', go: '#7B1FA2'};
 const fillCls = {en: 'en-fill', zh: 'zh-fill', math: 'math-fill', go: 'go-fill'};
 
 	let extra = '';
-	if (currentModule === 'zh' && q.char) {
+	if (currentModule === 'zh' && q.zhSub === 'read') {
+	// 阅读题：短文卡片（可折叠）
+	extra = '<div class="reading-box" id="readingBox"><div class="rb-head" onclick="toggleReading()">📖 ' + q.readTitle + ' <span class="rb-arrow">▼</span></div><div class="rb-body">' + q.readText + '</div></div>';
+	} else if (currentModule === 'zh' && q.char) {
 	extra = `<div class="q-char">${q.char}</div>`;
 	} else if (currentModule === 'math') {
 	extra = `<div class="math-prompt">${q.question.replace('__', '<span class="math-unknown">__</span>')}</div>`;
@@ -445,10 +525,12 @@ const fillCls = {en: 'en-fill', zh: 'zh-fill', math: 'math-fill', go: 'go-fill'}
 	extra = renderBoard(q);
 	}
 
-	// 朗读按钮：英语读单词/短句，语文读汉字
+	// 朗读按钮：英语读单词/短句，语文读汉字/诗词/短文
 	let speakBtn = '';
 	if (currentModule === 'en') {
 	speakBtn = `<button class="speak-btn" onclick="speak('${q.question.replace(/'/g, "\\'")}','en-US')">🔊 听发音</button>`;
+	} else if (currentModule === 'zh' && q.zhSub) {
+	speakBtn = `<button class="speak-btn" onclick="speak(this.dataset.t,'zh-CN')" data-t="${q.readText.replace(/"/g, '&quot;').replace(/'/g, '&#39;')}">🔊 朗读${q.zhSub === 'read' ? '短文' : '全诗'}</button>`;
 	} else if (currentModule === 'zh' && q.char) {
 	speakBtn = `<button class="speak-btn" onclick="speak('${q.char}','zh-CN')">🔊 听一听</button>`;
 	}
@@ -692,8 +774,25 @@ function switchModule(module) {
 	showGoTopicPicker();
 	return;
 	}
+	if (module === 'zh') {
+	// 语文：识字/诗词/阅读 三选一
+	showZhModePicker();
+	return;
+	}
 	questions = generateQuestions(module);
 	showQuestion();
+}
+
+function toggleReading() {
+	const box = document.getElementById('readingBox');
+	if (!box) return;
+	const body = box.querySelector('.rb-body');
+	const arrow = box.querySelector('.rb-arrow');
+	if (body) {
+	const open = body.style.display !== 'none';
+	body.style.display = open ? 'none' : 'block';
+	if (arrow) arrow.textContent = open ? '▼' : '▲';
+	}
 }
 
 loadData();
