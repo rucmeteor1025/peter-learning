@@ -148,6 +148,7 @@ body{font-family:'PingFang SC','Noto Sans SC',sans-serif;background:linear-gradi
 </div>
 </div>
 
+<script src="cloud.js"></script>
 <script>
 // ================= 学习币 + 游戏锁定（15 分钟） =================
 const GAME_MINUTES = 15;
@@ -185,6 +186,7 @@ if (getCoins() <= 0) { renderGameStatus(); return; }
 localStorage.setItem(ukey('coins'), String(getCoins() - 1));
 localStorage.setItem(ukey('gameEnd'), String(Date.now() + GAME_MINUTES * 60000));
 renderGameStatus();
+scheduleCloudPush();
 }
 // 每秒刷新状态条 + 到点锁定
 renderGameStatus();

@@ -154,6 +154,7 @@ body{font-family:'PingFang SC','Noto Sans SC','PingFang SC',sans-serif;backgroun
 <div style="font-size:14px;color:#888">选择一个科目开始今天的练习吧</div>
 </div>
 </div>
+<script src="cloud.js"></script>
 <script>
 function localDate() {
 const d = new Date();
@@ -188,7 +189,7 @@ function ukey(k) { return 'peter_d_' + USERNAME + '_' + k; }
 function uload(k, def) {
 try { const v = localStorage.getItem(ukey(k)); return v === null ? def : JSON.parse(v); } catch(e) { return def; }
 }
-function usave(k, v) { try { localStorage.setItem(ukey(k), JSON.stringify(v)); } catch(e) {} }
+function usave(k, v) { try { localStorage.setItem(ukey(k), JSON.stringify(v)); } catch(e) {} scheduleCloudPush(); }
 
 // ===== 积分体系：总分 + 等级称号 =====
 const LEVELS = [

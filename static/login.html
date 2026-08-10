@@ -77,6 +77,7 @@ body{font-family:'PingFang SC','Noto Sans SC',sans-serif;background:linear-gradi
 <div style="text-align:center;font-size:12px;color:#bbb;margin-top:24px">进度 · 积分 · 学习币都会记在账号里</div>
 </div>
 
+<script src="cloud.js"></script>
 <script>
 const AVATARS = ['🐻', '🐰', '🦊', '🐯', '🐸', '🐵', '🐶', '🐱', '🦁', '🐮'];
 let pickedAvatar = '🐻';
@@ -158,6 +159,8 @@ const h = await hashPass(pass);
 if (h !== u.pass) { showErr('loginErr'); return; }
 setSession({ username: loginTarget, av: u.av });
 migrateOldData(loginTarget);
+// 云端同步：拉取其他设备的最新记录
+await syncFromCloud(loginTarget);
 location.href = 'app.html';
 }
 
@@ -172,6 +175,8 @@ users[name] = { pass: h, av: pickedAvatar, created: Date.now() };
 saveUsers(users);
 setSession({ username: name, av: pickedAvatar });
 migrateOldData(name);
+// 云端同步：如果是老账号回归（本机无记录但云端有），拉回来
+await syncFromCloud(name);
 location.href = 'app.html';
 }
 
