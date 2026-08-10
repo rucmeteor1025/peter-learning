@@ -135,8 +135,10 @@ body{font-family:'PingFang SC','Noto Sans SC','PingFang SC',sans-serif;backgroun
 <div class="header">
 <h1>🐻 Peter 学习小助手</h1>
 <div class="date" id="dateDisplay"></div>
-<div class="streak" id="streakDisplay"></div>
-<div class="streak" id="coinDisplay" style="margin-left:6px"></div>
+<div class="streak" id="userDisplay"></div>
+<div class="streak" id="streakDisplay" style="margin-right:6px"></div>
+<div class="streak" id="coinDisplay"></div>
+<div style="margin-top:6px"><a href="login.html" onclick="localStorage.removeItem('peter_session')" style="color:rgba(255,255,255,.85);font-size:12px;text-decoration:none">切换账号 ›</a></div>
 </div>
 <div class="nav">
 <button class="en-btn" onclick="switchModule('en')">🇬🇧 英语</button>
@@ -162,22 +164,65 @@ const today = localDate();
 // 头部显示连续打卡
 function renderStreak() {
 try {
-const p = JSON.parse(localStorage.getItem('peter_progress') || '{}');
+const p = uload('progress', {});
 const n = p.streak || 0;
 const el = document.getElementById('streakDisplay');
 if (el) el.textContent = n > 0 ? '🔥 已连续打卡 ' + n + ' 天' : '🌟 今天开始打卡吧';
 } catch(e) {}
 }
-renderStreak();
 
 // ===== 学习币（完成练习 → 赚币 → 解锁小游戏）=====
-function getCoins() { try { return parseInt(localStorage.getItem('peter_coins') || '0') || 0; } catch(e) { return 0; } }
-function addCoins(n) { try { localStorage.setItem('peter_coins', String(getCoins() + n)); } catch(e) {} }
+function getCoins() { try { return parseInt(uload('coins', 0)) || 0; } catch(e) { return 0; } }
+function addCoins(n) { try { usave('coins', getCoins() + n); } catch(e) {} }
 function renderCoins() {
 const el = document.getElementById('coinDisplay');
 if (el) el.textContent = '🪙 ' + getCoins();
 }
+
+// ===== 用户会话（多用户：进度/积分/学习币按账号隔离）=====
+function getSession() { try { return JSON.parse(localStorage.getItem('peter_session') || 'null'); } catch(e) { return null; } }
+const SESSION = getSession();
+if (!SESSION) { location.href = 'login.html'; throw new Error('no session'); }
+const USERNAME = SESSION.username;
+function ukey(k) { return 'peter_d_' + USERNAME + '_' + k; }
+function uload(k, def) {
+try { const v = localStorage.getItem(ukey(k)); return v === null ? def : JSON.parse(v); } catch(e) { return def; }
+}
+function usave(k, v) { try { localStorage.setItem(ukey(k), JSON.stringify(v)); } catch(e) {} }
+
+// ===== 积分体系：总分 + 等级称号 =====
+const LEVELS = [
+	{ min: 0, name: '🌱 新学徒' },
+	{ min: 50, name: '📖 小小学士' },
+	{ min: 150, name: '✏️ 勤奋书生' },
+	{ min: 300, name: '⭐ 优秀学者' },
+	{ min: 500, name: '🏅 智慧达人' },
+	{ min: 800, name: '🎓 小博士' },
+	{ min: 1200, name: '👑 学习王者' },
+];
+function getTotalScore() {
+const p = uload('progress', {});
+let t = 0;
+Object.keys(p).forEach(d => {
+if (d === 'streak' || d === 'lastDate') return;
+Object.keys(p[d]).forEach(m => { if (typeof p[d][m] === 'number') t += p[d][m]; });
+});
+return t;
+}
+function getLevel() {
+const t = getTotalScore();
+let lv = LEVELS[0];
+for (const l of LEVELS) { if (t >= l.min) lv = l; }
+return lv;
+}
+function renderUserBar() {
+const el = document.getElementById('userDisplay');
+if (el) el.textContent = '👤 ' + USERNAME + ' · ' + getLevel().name;
+}
+// 会话初始化完成后刷新头部（streak/coins/用户等级）
+renderStreak();
 renderCoins();
+renderUserBar();
 
 // ===== 语音朗读（浏览器自带 TTS，无需联网）=====
 let voiceCn = null, voiceEn = null;
@@ -219,8 +264,8 @@ setTimeout(() => ctx.close(), 500);
 }
 
 // ===== 错题本（间隔重复：错的题优先再出）=====
-function loadWrong() { try { return JSON.parse(localStorage.getItem('peter_wrong') || '{}'); } catch(e) { return {}; } }
-function saveWrong(w) { try { localStorage.setItem('peter_wrong', JSON.stringify(w)); } catch(e) {} }
+function loadWrong() { return uload('wrong', {}); }
+function saveWrong(w) { usave('wrong', w); }
 function wrongKey(q) {
 if (currentModule === 'go') return 'go:' + q.id;
 if (currentModule === 'zh') {
@@ -839,7 +884,7 @@ function nextQuestion() {
 
 // 本周打卡日历（周一~周日，当天练了几科就几级绿）
 function weekCalendar() {
-const p = JSON.parse(localStorage.getItem('peter_progress') || '{}');
+const p = uload('progress', {});
 const now = new Date();
 const dow = (now.getDay() + 6) % 7; // 周一=0
 const monday = new Date(now);
@@ -872,7 +917,8 @@ const stars = pct >= 0.9 ? 3 : pct >= 0.7 ? 2 : pct >= 0.5 ? 1 : 0;
 const starHtml = Array.from({length: 3}, (_, i) => '<span class="star" style="animation-delay:' + (0.2 + i * 0.18) + 's">' + (i < stars ? '★' : '☆') + '</span>').join('');
 
 // 记录成绩 + 连续打卡
-const progress = JSON.parse(localStorage.getItem('peter_progress') || '{}');
+const progress = uload('progress', {});
+const lvBefore = getLevel().name;
 if (!progress[today]) progress[today] = {};
 progress[today][currentModule] = score;
 const last = progress.lastDate || '';
@@ -882,12 +928,16 @@ const yesterday = y.getFullYear() + '-' + String(y.getMonth() + 1).padStart(2, '
 progress.streak = (last === yesterday ? (progress.streak || 0) : 0) + 1;
 progress.lastDate = today;
 }
-localStorage.setItem('peter_progress', JSON.stringify(progress));
+usave('progress', progress);
 renderStreak();
 // 完成练习赚 1 个学习币（小游戏解锁用）
 addCoins(1);
 renderCoins();
+renderUserBar();
 const coinNote = `<div class="score-sub">🪙 获得 1 个学习币！可以去玩 15 分钟小游戏</div>`;
+// 等级升级提示
+const lvAfter = getLevel().name;
+const lvNote = lvBefore !== lvAfter ? `<div class="score-sub" style="color:#7B1FA2;font-weight:800">🎉 升级啦！现在是「${lvAfter}」</div>` : `<div class="score-sub">🏆 总分 ${getTotalScore()} · 当前等级「${lvAfter}」</div>`;
 
 // 本轮错题数（提示进了错题本）
 const wrongMap = loadWrong();
@@ -903,6 +953,7 @@ content.innerHTML = `
 <div class="score-text">${score} / ${total}</div>
 <div class="score-msg">${msg}</div>
 <div class="score-sub">🔥 已连续打卡 ${progress.streak || 0} 天</div>
+${lvNote}
 ${coinNote}
 ${livesLeft}
 ${weekCalendar()}

@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>👤 Peter 学习空间 · 登录</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'PingFang SC','Noto Sans SC',sans-serif;background:linear-gradient(180deg,#eef4ff 0%,#fdf2f8 60%,#f0fdf4 100%);min-height:100vh;-webkit-tap-highlight-color:transparent}
+.wrap{max-width:440px;margin:0 auto;padding:30px 20px 40px}
+.logo{text-align:center;margin-bottom:26px}
+.logo .big{font-size:64px;animation:popIn .5s cubic-bezier(.34,1.56,.64,1)}
+.logo h1{font-size:24px;font-weight:800;color:#263238;margin-top:8px;letter-spacing:1px}
+.logo p{font-size:13px;color:#999;margin-top:4px}
+.card{background:#fff;border-radius:24px;box-shadow:0 10px 32px rgba(30,50,100,.10);padding:24px 20px}
+.sec-title{font-size:13px;color:#999;font-weight:700;letter-spacing:1px;margin:18px 4px 10px}
+/* 用户卡片 */
+.user-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.user-card{background:#f7f9fd;border:2px solid transparent;border-radius:16px;padding:14px 6px;text-align:center;cursor:pointer;transition:all .2s}
+.user-card:active{transform:scale(.95)}
+.user-card .av{font-size:34px}
+.user-card .nm{font-size:12.5px;font-weight:700;color:#37474F;margin-top:6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.user-card:hover{border-color:#29B6F6}
+/* 表单 */
+.field{margin-bottom:14px}
+.field label{display:block;font-size:12.5px;color:#666;font-weight:700;margin-bottom:6px}
+.field input{width:100%;padding:13px 16px;border:2px solid #e3e8f0;border-radius:14px;font-size:16px;outline:none;transition:border .2s;background:#fafbfd}
+.field input:focus{border-color:#29B6F6}
+.btn{width:100%;padding:15px;border:none;border-radius:16px;font-size:16px;font-weight:800;cursor:pointer;letter-spacing:2px;transition:all .2s}
+.btn-primary{background:linear-gradient(135deg,#29B6F6,#4DD0E1);color:#fff;box-shadow:0 6px 18px rgba(41,182,246,.35)}
+.btn-primary:active{transform:scale(.97)}
+.btn-secondary{background:#f0f4f9;color:#546E7A;margin-top:10px}
+.btn-secondary:active{transform:scale(.97)}
+.err{display:none;background:#FFEBEE;color:#C62828;font-size:13px;font-weight:600;border-radius:12px;padding:10px 14px;margin-bottom:12px;text-align:center}
+.err.show{display:block}
+.switch-link{text-align:center;font-size:13.5px;color:#29B6F6;font-weight:700;margin-top:16px;cursor:pointer}
+.hidden{display:none}
+@keyframes popIn{0%{transform:scale(0);opacity:0}70%{transform:scale(1.15)}100%{transform:scale(1);opacity:1}}
+@keyframes fadeIn{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:translateY(0)}}
+.fade-in{animation:fadeIn .35s cubic-bezier(.4,0,.2,1)}
+</style>
+</head>
+<body>
+<div class="wrap">
+<div class="logo">
+<div class="big">🐻</div>
+<h1>Peter 学习空间</h1>
+<p id="logoSub">登录后开始学习</p>
+</div>
+
+<div class="card fade-in">
+<div id="pickView">
+<div class="sec-title">👋 选择用户</div>
+<div class="user-grid" id="userGrid"></div>
+<button class="btn btn-secondary" onclick="showRegister()" style="margin-top:16px">➕ 注册新用户</button>
+</div>
+
+<div id="loginView" class="hidden">
+<div class="sec-title">🔐 输入密码</div>
+<div class="field"><input type="password" id="loginPass" placeholder="密码" onkeydown="if(event.key==='Enter')doLogin()"></div>
+<div class="err" id="loginErr">密码不对，再试一次</div>
+<button class="btn btn-primary" onclick="doLogin()">进入学习空间 →</button>
+<div class="switch-link" onclick="backToPick()">← 返回选择用户</div>
+</div>
+
+<div id="regView" class="hidden">
+<div class="sec-title">✨ 注册新用户</div>
+<div class="field"><label>昵称</label><input id="regName" placeholder="比如：Peter / 爸爸" maxlength="12"></div>
+<div class="field"><label>密码（4-20 位）</label><input type="password" id="regPass" placeholder="设置密码" maxlength="20"></div>
+<div class="field"><label>选择头像</label><div id="avatarPick" style="display:flex;gap:8px;flex-wrap:wrap"></div></div>
+<div class="err" id="regErr">请检查昵称和密码</div>
+<button class="btn btn-primary" onclick="doRegister()">注册并进入 →</button>
+<div class="switch-link" onclick="backToPick()">← 返回选择用户</div>
+</div>
+</div>
+
+<div style="text-align:center;font-size:12px;color:#bbb;margin-top:24px">进度 · 积分 · 学习币都会记在账号里</div>
+</div>
+
+<script>
+const AVATARS = ['🐻', '🐰', '🦊', '🐯', '🐸', '🐵', '🐶', '🐱', '🦁', '🐮'];
+let pickedAvatar = '🐻';
+let loginTarget = null;
+
+// ===== 用户存储（本地版，云端同步接入点）=====
+function getUsers() { try { return JSON.parse(localStorage.getItem('peter_users') || '{}'); } catch(e) { return {}; } }
+function saveUsers(u) { try { localStorage.setItem('peter_users', JSON.stringify(u)); } catch(e) {} }
+function getSession() { try { return JSON.parse(localStorage.getItem('peter_session') || 'null'); } catch(e) { return null; } }
+function setSession(u) { try { localStorage.setItem('peter_session', JSON.stringify(u)); } catch(e) {} }
+// 简易密码摘要（SHA-256，非 HTTPS 环境自动降级）
+async function hashPass(pass) {
+try {
+const data = new TextEncoder().encode('peter-salt-' + pass);
+const buf = await crypto.subtle.digest('SHA-256', data);
+return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2, '0')).join('');
+} catch(e) {
+// 局域网 http 环境（非 secure context）fallback
+let h = 0;
+for (let i = 0; i < pass.length; i++) { h = ((h << 5) - h + pass.charCodeAt(i)) | 0; }
+return 'f' + Math.abs(h).toString(16) + pass.length;
+}
+}
+
+function renderUsers() {
+const users = getUsers();
+const grid = document.getElementById('userGrid');
+const names = Object.keys(users);
+if (!names.length) {
+grid.innerHTML = '<div style="grid-column:1/-1;text-align:center;color:#999;font-size:13px;padding:20px 0">还没有用户，先注册一个吧</div>';
+return;
+}
+grid.innerHTML = names.map(n => {
+const u = users[n];
+return '<div class="user-card" onclick="pickUser(\'' + n.replace(/'/g, "\\'") + '\')"><div class="av">' + (u.av || '🐻') + '</div><div class="nm">' + n + '</div></div>';
+}).join('');
+}
+
+function pickUser(name) {
+loginTarget = name;
+document.getElementById('loginView').classList.remove('hidden');
+document.getElementById('pickView').classList.add('hidden');
+document.getElementById('logoSub').textContent = '你好，' + name + '！';
+document.getElementById('loginPass').value = '';
+document.getElementById('loginErr').classList.remove('show');
+document.getElementById('loginPass').focus();
+}
+
+function backToPick() {
+document.getElementById('pickView').classList.remove('hidden');
+document.getElementById('loginView').classList.add('hidden');
+document.getElementById('regView').classList.add('hidden');
+document.getElementById('logoSub').textContent = '登录后开始学习';
+}
+
+function showRegister() {
+document.getElementById('pickView').classList.add('hidden');
+document.getElementById('regView').classList.remove('hidden');
+document.getElementById('logoSub').textContent = '创建新账号';
+document.getElementById('regName').value = '';
+document.getElementById('regPass').value = '';
+document.getElementById('regErr').classList.remove('show');
+// 头像选择
+const ap = document.getElementById('avatarPick');
+ap.innerHTML = AVATARS.map(a => '<span style="font-size:26px;padding:6px;border-radius:12px;cursor:pointer;background:' + (a === pickedAvatar ? '#E1F5FE' : '#f5f7fa') + '" onclick="pickAvatar(\'' + a + '\')">' + a + '</span>').join('');
+}
+
+function pickAvatar(a) {
+pickedAvatar = a;
+document.getElementById('avatarPick').innerHTML = AVATARS.map(x => '<span style="font-size:26px;padding:6px;border-radius:12px;cursor:pointer;background:' + (x === pickedAvatar ? '#E1F5FE' : '#f5f7fa') + '" onclick="pickAvatar(\'' + x + '\')">' + x + '</span>').join('');
+}
+
+async function doLogin() {
+const pass = document.getElementById('loginPass').value;
+const users = getUsers();
+const u = users[loginTarget];
+if (!u) { showErr('loginErr'); return; }
+const h = await hashPass(pass);
+if (h !== u.pass) { showErr('loginErr'); return; }
+setSession({ username: loginTarget, av: u.av });
+migrateOldData(loginTarget);
+location.href = 'app.html';
+}
+
+async function doRegister() {
+const name = document.getElementById('regName').value.trim();
+const pass = document.getElementById('regPass').value;
+if (!name || pass.length < 4 || pass.length > 20) { showErr('regErr'); return; }
+const users = getUsers();
+if (users[name]) { showErr('regErr'); document.getElementById('regErr').textContent = '这个昵称已经有人用了'; return; }
+const h = await hashPass(pass);
+users[name] = { pass: h, av: pickedAvatar, created: Date.now() };
+saveUsers(users);
+setSession({ username: name, av: pickedAvatar });
+migrateOldData(name);
+location.href = 'app.html';
+}
+
+function showErr(id) {
+const el = document.getElementById(id);
+el.classList.add('show');
+setTimeout(() => el.classList.remove('show'), 2500);
+}
+
+// ===== 旧数据迁移：第一次登录时把无用户前缀的旧记录归入该账号 =====
+function migrateOldData(username) {
+try {
+const ukey = (k) => 'peter_d_' + username + '_' + k;
+let migrated = false;
+const pairs = [
+['peter_progress', 'progress'],
+['peter_wrong', 'wrong'],
+['peter_coins', 'coins'],
+['peter_game_end', 'gameEnd']
+];
+for (const [oldK, newK] of pairs) {
+const oldV = localStorage.getItem(oldK);
+if (oldV !== null && localStorage.getItem(ukey(newK)) === null) {
+localStorage.setItem(ukey(newK), oldV);
+migrated = true;
+}
+}
+if (migrated) localStorage.setItem('peter_migrated_' + username, '1');
+} catch(e) {}
+}
+
+// 已登录直接进入
+const sess = getSession();
+if (sess && getUsers()[sess.username]) {
+location.href = 'app.html';
+} else {
+renderUsers();
+}
+</script>
+</body>
+</html>

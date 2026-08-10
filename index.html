@@ -38,8 +38,7 @@ body{background:#f5f7fa;min-height:100vh;-webkit-tap-highlight-color:transparent
 <div class="hdr">
 <h1>🐻 Peter 学习空间</h1>
 <div class="date" id="dateDisplay"></div>
-<div class="streak" id="streakDisplay">🌟 今天开始打卡吧</div>
-<div class="streak" id="coinDisplay" style="margin-left:6px"></div>
+<div id="userArea"></div>
 </div>
 
 <div class="wrap">
@@ -86,37 +85,77 @@ body{background:#f5f7fa;min-height:100vh;-webkit-tap-highlight-color:transparent
 
 <script>
 document.getElementById('dateDisplay').textContent = new Date().toLocaleDateString('zh-CN', {year:'numeric',month:'long',day:'numeric',weekday:'long'});
-try {
-	const p = JSON.parse(localStorage.getItem('peter_progress') || '{}');
-	const n = p.streak || 0;
-	document.getElementById('streakDisplay').textContent = n > 0 ? '🔥 已连续打卡 ' + n + ' 天' : '🌟 今天开始打卡吧';
-} catch(e) {}
+
+// ===== 用户会话 =====
+function getSession() { try { return JSON.parse(localStorage.getItem('peter_session') || 'null'); } catch(e) { return null; } }
+const SESSION = getSession();
+const USERNAME = SESSION ? SESSION.username : null;
+function ukey(k) { return 'peter_d_' + USERNAME + '_' + k; }
+function uload(k, def) {
+try { const v = localStorage.getItem(ukey(k)); return v === null ? def : JSON.parse(v); } catch(e) { return def; }
+}
+const LEVELS = [
+	{ min: 0, name: '🌱 新学徒' }, { min: 50, name: '📖 小小学士' },
+	{ min: 150, name: '✏️ 勤奋书生' }, { min: 300, name: '⭐ 优秀学者' },
+	{ min: 500, name: '🏅 智慧达人' }, { min: 800, name: '🎓 小博士' }, { min: 1200, name: '👑 学习王者' },
+];
+function getTotalScore() {
+const p = uload('progress', {});
+let t = 0;
+Object.keys(p).forEach(d => {
+if (d === 'streak' || d === 'lastDate') return;
+Object.keys(p[d]).forEach(m => { if (typeof p[d][m] === 'number') t += p[d][m]; });
+});
+return t;
+}
+function getLevel() {
+const t = getTotalScore();
+let lv = LEVELS[0];
+for (const l of LEVELS) { if (t >= l.min) lv = l; }
+return lv;
+}
+
+const userArea = document.getElementById('userArea');
+const weekCal = document.getElementById('weekCal');
 let coins = 0;
-try {
-	coins = parseInt(localStorage.getItem('peter_coins') || '0') || 0;
-	document.getElementById('coinDisplay').textContent = '🪙 ' + coins;
-} catch(e) {}
+let streak = 0;
+let levelName = '🌱 新学徒';
+
+if (!SESSION) {
+userArea.innerHTML = '<a class="streak" href="static/login.html" style="text-decoration:none;display:inline-block;margin-top:8px">👤 登录 / 注册</a>';
+weekCal.innerHTML = '<div class="wc-title">📅 本周打卡</div><div style="text-align:center;color:#999;font-size:13px;padding:10px">登录后查看打卡日历</div>';
+} else {
+USERNAME && (levelName = getLevel().name);
+const p = uload('progress', {});
+streak = p.streak || 0;
+coins = parseInt(uload('coins', 0)) || 0;
+userArea.innerHTML = '<div class="streak" style="margin-top:8px">👤 ' + USERNAME + ' · ' + getLevel().name + '</div>' +
+'<div class="streak" style="margin-left:6px">🔥 ' + streak + ' 天</div>' +
+'<div class="streak" style="margin-left:6px">🪙 ' + coins + '</div>' +
+'<div style="margin-top:8px"><a href="static/history.html" style="color:#fff;font-size:13px;font-weight:700;text-decoration:none;background:rgba(255,255,255,.2);padding:5px 14px;border-radius:16px">📊 我的成绩单 ›</a> <a href="static/login.html" onclick="localStorage.removeItem(\'peter_session\')" style="color:rgba(255,255,255,.85);font-size:12px;text-decoration:none">切换账号</a></div>';
 // 游戏卡片状态
 try {
-	const end = parseInt(localStorage.getItem('peter_game_end') || '0') || 0;
-	const card = document.getElementById('gameCardStatus');
-	if (card) {
-	if (end > Date.now()) {
-	const left = Math.max(0, end - Date.now());
-	card.textContent = '⏰ 游戏时间进行中（' + Math.ceil(left / 60000) + ' 分钟）';
-	card.style.color = '#00838F';
-	} else if (coins > 0) {
-	card.textContent = '🎮 可以开始玩（1 币 = 15 分钟）';
-	card.style.color = '#2E7D32';
-	} else {
-	card.textContent = '🔒 完成练习赚学习币解锁';
-	card.style.color = '#C62828';
-	}
-	}
+const end = parseInt(localStorage.getItem('peter_game_end') || '0') || 0;
+const card = document.getElementById('gameCardStatus');
+if (card) {
+if (end > Date.now()) {
+const left = Math.max(0, end - Date.now());
+card.textContent = '⏰ 游戏时间进行中（' + Math.ceil(left / 60000) + ' 分钟）';
+card.style.color = '#00838F';
+} else if (coins > 0) {
+card.textContent = '🎮 可以开始玩（1 币 = 15 分钟）';
+card.style.color = '#2E7D32';
+} else {
+card.textContent = '🔒 完成练习赚学习币解锁';
+card.style.color = '#C62828';
+}
+}
 } catch(e) {}
-// 本周打卡日历（与 App 内一致）
+}
+// 本周打卡日历（已登录时渲染，与 App 内一致）
+if (SESSION) {
 try {
-	const p = JSON.parse(localStorage.getItem('peter_progress') || '{}');
+	const p = uload('progress', {});
 	const now = new Date();
 	const dow = (now.getDay() + 6) % 7;
 	const monday = new Date(now);
@@ -137,6 +176,7 @@ try {
 	html += '</div>';
 	document.getElementById('weekCal').innerHTML = html;
 } catch(e) {}
+}
 </script>
 </body>
 </html>

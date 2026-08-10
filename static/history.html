@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>📊 Peter 成绩单</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'PingFang SC','Noto Sans SC',sans-serif;background:linear-gradient(180deg,#eef4ff 0%,#fdf2f8 50%,#f0fdf4 100%);min-height:100vh;-webkit-tap-highlight-color:transparent}
+.header{background:linear-gradient(135deg,#7B1FA2,#AB47BC 60%,#CE93D8);color:#fff;padding:22px 20px 26px;text-align:center;border-radius:0 0 32px 32px;box-shadow:0 6px 24px rgba(123,31,162,.3)}
+.header h1{font-size:24px;text-shadow:0 2px 6px rgba(0,0,0,.15)}
+.header .sub{font-size:13px;opacity:.92;margin-top:4px}
+.wrap{max-width:520px;margin:18px auto;padding:0 16px}
+.back-btn{display:inline-block;margin-bottom:14px;padding:8px 18px;background:#fff;color:#7B1FA2;border-radius:20px;font-size:14px;font-weight:700;cursor:pointer;box-shadow:0 2px 8px rgba(0,0,0,.08);text-decoration:none}
+/* 等级卡 */
+.level-card{background:#fff;border-radius:22px;box-shadow:0 8px 28px rgba(123,31,162,.12);padding:22px;text-align:center;margin-bottom:16px;border-top:6px solid #AB47BC}
+.level-card .lv{font-size:26px;font-weight:800;color:#7B1FA2}
+.level-card .score{font-size:42px;font-weight:800;color:#263238;margin:8px 0 2px}
+.level-card .score-label{font-size:13px;color:#999;margin-bottom:12px}
+.level-progress{height:10px;background:#f0e6f5;border-radius:10px;overflow:hidden;margin:0 10px}
+.level-progress .fill{height:100%;background:linear-gradient(90deg,#AB47BC,#CE93D8);border-radius:10px;transition:width .5s}
+.level-next{font-size:12px;color:#999;margin-top:8px}
+/* 记录列表 */
+.rec-card{background:#fff;border-radius:18px;box-shadow:0 4px 16px rgba(30,50,100,.06);padding:16px;margin-bottom:12px}
+.rec-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}
+.rec-date{font-size:15px;font-weight:800;color:#263238}
+.rec-total{font-size:13px;color:#7B1FA2;font-weight:800}
+.rec-row{display:flex;gap:8px;flex-wrap:wrap}
+.rec-tag{font-size:12.5px;font-weight:700;padding:6px 12px;border-radius:14px}
+.rec-tag.en{background:#E3F2FD;color:#1976D2}.rec-tag.zh{background:#FFF3E0;color:#E65100}
+.rec-tag.math{background:#E8F5E9;color:#2E7D32}.rec-tag.go{background:#F3E5F5;color:#7B1FA2}
+.rec-tag .st{color:#B8860B}
+.empty{text-align:center;color:#999;font-size:14px;padding:40px 0}
+.sec-title{font-size:14px;color:#999;margin:6px 4px 12px;font-weight:700;letter-spacing:1px}
+</style>
+</head>
+<body>
+<div class="header">
+<h1>📊 我的成绩单</h1>
+<div class="sub" id="userLine">加载中…</div>
+</div>
+<div class="wrap">
+<a class="back-btn" href="index.html">← 返回学习空间</a>
+<div id="content"></div>
+</div>
+<script>
+// ===== 用户会话（与 app.html 相同的 key 规则）=====
+function getSession() { try { return JSON.parse(localStorage.getItem('peter_session') || 'null'); } catch(e) { return null; } }
+const SESSION = getSession();
+if (!SESSION) { location.href = 'login.html'; throw new Error('no session'); }
+const USERNAME = SESSION.username;
+function ukey(k) { return 'peter_d_' + USERNAME + '_' + k; }
+function uload(k, def) {
+try { const v = localStorage.getItem(ukey(k)); return v === null ? def : JSON.parse(v); } catch(e) { return def; }
+}
+const MODULES = { en: '🇬🇧 英语', zh: '📖 语文', math: '🧮 数学', go: '⚫ 围棋' };
+const LEVELS = [
+	{ min: 0, name: '🌱 新学徒' },
+	{ min: 50, name: '📖 小小学士' },
+	{ min: 150, name: '✏️ 勤奋书生' },
+	{ min: 300, name: '⭐ 优秀学者' },
+	{ min: 500, name: '🏅 智慧达人' },
+	{ min: 800, name: '🎓 小博士' },
+	{ min: 1200, name: '👑 学习王者' },
+];
+function getTotalScore() {
+const p = uload('progress', {});
+let t = 0;
+Object.keys(p).forEach(d => {
+if (d === 'streak' || d === 'lastDate') return;
+Object.keys(p[d]).forEach(m => { if (typeof p[d][m] === 'number') t += p[d][m]; });
+});
+return t;
+}
+function getLevel() {
+const t = getTotalScore();
+let lv = LEVELS[0];
+for (const l of LEVELS) { if (t >= l.min) lv = l; }
+return lv;
+}
+function stars(score, total) {
+const pct = score / total;
+const n = pct >= 0.9 ? 3 : pct >= 0.7 ? 2 : pct >= 0.5 ? 1 : 0;
+return '★'.repeat(n) + '☆'.repeat(3 - n);
+}
+function render() {
+document.getElementById('userLine').textContent = '👤 ' + USERNAME + ' · ' + getLevel().name;
+const total = getTotalScore();
+const lv = getLevel();
+const lvIdx = LEVELS.findIndex(l => l.min === lv.min);
+const next = LEVELS[lvIdx + 1];
+const pct = next ? Math.min(100, Math.round((total - lv.min) / (next.min - lv.min) * 100)) : 100;
+let html = '<div class="level-card fade-in"><div class="lv">' + lv.name + '</div>' +
+'<div class="score">' + total + '</div><div class="score-label">累计总分</div>' +
+'<div class="level-progress"><div class="fill" style="width:' + pct + '%"></div></div>' +
+(next ? '<div class="level-next">还差 ' + (next.min - total) + ' 分升级到 ' + next.name + '</div>' : '<div class="level-next">已达最高等级！🎉</div>') +
+'</div>';
+
+const p = uload('progress', {});
+const dates = Object.keys(p).filter(d => d !== 'streak' && d !== 'lastDate').sort().reverse();
+if (!dates.length) {
+html += '<div class="rec-card"><div class="empty">还没有练习记录<br>快去完成第一轮吧！</div></div>';
+} else {
+html += '<div class="sec-title">📅 练习记录（最近 20 天）</div>';
+dates.slice(0, 20).forEach(d => {
+let dayTotal = 0;
+let tags = '';
+Object.keys(p[d]).forEach(m => {
+if (m === 'streak' || m === 'lastDate') return;
+const s = p[d][m];
+dayTotal += s;
+const totalQ = 10;
+tags += '<span class="rec-tag ' + m + '">' + (MODULES[m] || m) + ' ' + s + ' 分 <span class="st">' + stars(s, totalQ) + '</span></span>';
+});
+html += '<div class="rec-card fade-in"><div class="rec-head"><div class="rec-date">' + d + '</div><div class="rec-total">共 ' + dayTotal + ' 分</div></div><div class="rec-row">' + tags + '</div></div>';
+});
+}
+document.getElementById('content').innerHTML = html;
+}
+render();
+</script>
+</body>
+</html>

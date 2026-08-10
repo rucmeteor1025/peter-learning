@@ -151,8 +151,14 @@ body{font-family:'PingFang SC','Noto Sans SC',sans-serif;background:linear-gradi
 <script>
 // ================= 学习币 + 游戏锁定（15 分钟） =================
 const GAME_MINUTES = 15;
-function getCoins() { try { return parseInt(localStorage.getItem('peter_coins') || '0') || 0; } catch(e) { return 0; } }
-function gameSessionEnd() { try { return parseInt(localStorage.getItem('peter_game_end') || '0') || 0; } catch(e) { return 0; } }
+// 用户会话（与 app.html 相同的 key 规则）
+function getSession() { try { return JSON.parse(localStorage.getItem('peter_session') || 'null'); } catch(e) { return null; } }
+const SESSION = getSession();
+if (!SESSION) { location.href = 'login.html'; throw new Error('no session'); }
+const USERNAME = SESSION.username;
+function ukey(k) { return 'peter_d_' + USERNAME + '_' + k; }
+function getCoins() { try { return parseInt(localStorage.getItem(ukey('coins')) || '0') || 0; } catch(e) { return 0; } }
+function gameSessionEnd() { try { return parseInt(localStorage.getItem(ukey('gameEnd')) || '0') || 0; } catch(e) { return 0; } }
 function isPlaying() { return gameSessionEnd() > Date.now(); }
 function renderGameStatus() {
 const bar = document.getElementById('gameStatus');
@@ -176,8 +182,8 @@ bar.innerHTML = html;
 }
 function startGameSession() {
 if (getCoins() <= 0) { renderGameStatus(); return; }
-localStorage.setItem('peter_coins', String(getCoins() - 1));
-localStorage.setItem('peter_game_end', String(Date.now() + GAME_MINUTES * 60000));
+localStorage.setItem(ukey('coins'), String(getCoins() - 1));
+localStorage.setItem(ukey('gameEnd'), String(Date.now() + GAME_MINUTES * 60000));
 renderGameStatus();
 }
 // 每秒刷新状态条 + 到点锁定
