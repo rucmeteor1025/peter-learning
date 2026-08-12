@@ -14,7 +14,7 @@
 ## 本地运行
 
 ```bash
-cd ~/AI_invest/生活助理/Peter学习
+cd 本仓库业务源目录
 python3 server.py          # http://localhost:8765
 ```
 
@@ -22,11 +22,11 @@ python3 server.py          # http://localhost:8765
 
 ## 更新流程
 
-业务源在 `~/AI_invest/生活助理/Peter学习/`（含 `build_summer_graph.py` 图谱构建脚本）。
+业务源在 `本仓库业务源目录/`（含 `build_summer_graph.py` 图谱构建脚本）。
 改完源后同步到此部署仓库并推送：
 
 ```bash
-cd ~/peter-learning
+cd <本仓库路径>
 # 重新拷贝 index.html / static / data / graphs
 git add -A && git commit -m "..." && git push
 ```
